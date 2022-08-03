@@ -4,14 +4,17 @@ import datetime as dt
 import matplotlib.pyplot as plt
 plt.style.use(['science', 'notebook', 'grid'])
 
-def plotorbit(planet, jovians, t, ax):
+keplerel = pd.read_csv('keplerel.csv', index_col=0)             # Planets' Kepler elements
+jovians = pd.read_csv('jovians.csv', index_col=0)               # Jovian planets' correction terms
+
+def plotorbit(planet, t, ax):
     # Propagation of Kepler orbital elements using Standish's linear fit
-    a = planet['a'] + t * planet['dadt']
-    e = planet['e'] + t * planet['dedt']
-    I = np.deg2rad(planet['I'] + t * planet['dIdt'])
-    L = np.deg2rad(planet['L'] + t * planet['dLdt'])
-    long_peri = np.deg2rad(planet['long.peri.'] + t * planet['dlong.peri.dt'])
-    W = np.deg2rad(planet['W'] + t * planet['dWdt'])
+    a = planet['a'] + t * planet['da/dt']
+    e = planet['e'] + t * planet['de/dt']
+    I = np.deg2rad(planet['I'] + t * planet['dI/dt'])
+    L = np.deg2rad(planet['L'] + t * planet['dL/dt'])
+    long_peri = np.deg2rad(planet['long.peri.'] + t * planet['dlong.peri./dt'])
+    W = np.deg2rad(planet['W'] + t * planet['dW/dt'])
     w = long_peri - W
     M = L - long_peri
     if planet.name in jovians.index:                            # Jovian planets correction terms
@@ -47,11 +50,9 @@ def main():
         return
     t = (TT-J2000).days / 36525                                # Centuries between J2000.0 and input final date
     # E.M. Standish (1992)'s data for simplified orbit propagation
-    keplerel = pd.read_csv('keplerel.csv', index_col=0)        # Planets' Kepler elements
-    jovians = pd.read_csv('jovians.csv', index_col=0)          # Jovian planets' correction terms
     ax = plt.axes(projection='3d')
     for _, planet in keplerel.iterrows():
-        plotorbit(planet, jovians, t, ax)
+        plotorbit(planet, t, ax)
     ax.set_xlim3d(-30,30)
     ax.set_ylim3d(-30,30)
     ax.set_zlim3d(-30,30)
