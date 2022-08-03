@@ -18,11 +18,12 @@ def getdate():
         TT = dt.date.fromisoformat(input('Date yyyy-mm-dd: '))  # Terrestrial time, approx JPL ephemeris time
     except ValueError:
         print('Invalid date format')
-        return
-    t = (TT - J2000).days / 36525                               # Centuries between J2000.0 and input final date
-    return t
+        exit()
+    start = (dt.date.today() - J2000).days                      # Days between today and J2000
+    end = (TT - J2000).days                                     # Days between input final date and J2000
+    return [start, end]
 
-def keplerelements(planet, t, E0=0):
+def keplerelements(planet, t):
     # Propagation of Kepler orbital elements using Standish's linear fit
     a = planet['a'] + t * planet['da/dt']
     e = planet['e'] + t * planet['de/dt']
@@ -38,7 +39,7 @@ def keplerelements(planet, t, E0=0):
         M = M + b * t ** 2 + c * np.cos(f * t) + s * np.sin(f * t)
     K = lambda E: E - e * np.sin(E) - M                         # Kepler's equation = 0
     dKdE = lambda E: 1 - e * np.cos(E)                          # Derivative
-    E = scp.optimize.newton(K, E0, fprime=dKdE, tol=1.75e-8)
+    E = scp.optimize.newton(K, planet['E'], fprime=dKdE, tol=1.75e-8, maxiter=100)
     return [a, e, w, I, W, E]
 
 def plotorbit(planet, a, e, w, I, W, E, ax):
@@ -61,9 +62,10 @@ def plotorbit(planet, a, e, w, I, W, E, ax):
     ax.plot(ellipsecl[0], ellipsecl[1], ellipsecl[2], 'k', lw=1)
 
 def main():
-    t = getdate()
+    start, end = getdate()
     fig, ax = plt.subplots(subplot_kw={'projection': '3d'})
-    frames = 3
+    frames = abs(end - start)
+    print(keplerel.loc['Mercury', 'E'])
     for n in range(frames):
         plt.cla()
         ax.set_xlim3d(-25, 25)
@@ -73,8 +75,10 @@ def main():
         ax.set_ylabel(r'$\hat{Y}=\hat{Z}\times\hat{X}$ (AU)', labelpad=10)
         ax.set_zlabel(r'$\hat{Z}$: North Ecliptic Pole (AU)', labelpad=10)
         ax.set_title(f'Solar System in J2000 Ecliptic Plane, noon {dt.date.today()}(TT)')
+        t = start + n * np.sign(end - start)
         for _, planet in keplerel.iterrows():
             a, e, w, I, W, E = keplerelements(planet, t)
+            keplerel.loc[planet, 'E'] = E
             plotorbit(planet, a, e, w, I, W, E, ax)
         ax.axes.legend(bbox_to_anchor=[1.8, .9])
         plt.savefig(f"frames/{n}.png")
