@@ -25,20 +25,22 @@ def getdate():
 
 def keplerelements(planet, t):
     # Propagation of Kepler orbital elements using Standish's linear fit
-    a = planet['a'] + t * planet['da/dt']
+    keplerel.loc[planet.name, 'a'] = planet['a'] + t * planet['da/dt']
     e = planet['e'] + t * planet['de/dt']
-    w = np.deg2rad(planet['w'] + t * planet['dw/dt'])
-    I = np.deg2rad(planet['I'] + t * planet['dI/dt'])
-    W = np.deg2rad(planet['W'] + t * planet['dW/dt'])
+    keplerel.loc[planet.name, 'e'] = e
+    keplerel.loc[planet.name, 'w'] = np.deg2rad(planet['w'] + t * planet['dw/dt'])
+    keplerel.loc[planet.name, 'I'] = np.deg2rad(planet['I'] + t * planet['dI/dt'])
+    keplerel.loc[planet.name, 'W'] = np.deg2rad(planet['W'] + t * planet['dW/dt'])
     M = np.deg2rad(planet['M'] + t * planet['dM/dt'])
+    keplerel.loc[planet.name, 'M'] = M
     if planet.name in jovians.index:                            # Jovian planets correction terms
         jovian = np.deg2rad(jovians.loc[planet.name])
         b = jovian['b']; c = jovian['c']; s = jovian['s']; f = jovian['f']
         M = M + b * t ** 2 + c * np.cos(f * t) + s * np.sin(f * t)
     K = lambda E: E - e * np.sin(E) - M                         # Kepler's equation = 0
     dKdE = lambda E: 1 - e * np.cos(E)                          # Derivative
-    E = scp.optimize.newton(K, planet['E'], fprime=dKdE, tol=1.75e-4, maxiter=100)
-    return [a, e, w, I, W, M, E]
+    E = scp.optimize.newton(K, planet['E'], fprime=dKdE, tol=1.75e-8)
+    keplerel[planet.name, 'E'] = E
 
 def plotorbit(planet, ax):
     a = planet['a']; e = planet['e']; w = planet['w']; I = planet['I']; W = planet['W']; E = planet['E']
@@ -64,7 +66,6 @@ def main():
     start, end = getdate()
     fig, ax = plt.subplots(subplot_kw={'projection': '3d'})
     frames = abs(end - start)
-    print(keplerel.loc['Mercury', 'E'])
     for n in range(frames):
         plt.cla()
         ax.set_xlim3d(-25, 25)
@@ -76,7 +77,7 @@ def main():
         ax.set_title(f'Solar System in J2000 Ecliptic Plane, noon {dt.date.today()}(TT)')
         t = start + n * np.sign(end - start)
         for idx, planet in keplerel.iterrows():
-            keplerel.loc[idx, ['a', 'e', 'w', 'I', 'W','E']] = keplerelements(planet, t)
+            keplerelements(planet, t)
             plotorbit(planet, ax)
         ax.axes.legend(bbox_to_anchor=[1.8, .9])
         plt.savefig(f"frames/{n}.png")
