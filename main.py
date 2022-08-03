@@ -4,8 +4,11 @@ import pandas as pd
 import datetime as dt
 import os
 import matplotlib.pyplot as plt
+from matplotlib import animation
+from matplotlib.animation import PillowWriter
 plt.style.use(['science', 'notebook', 'grid'])
 
+# E.M. Standish (1992)'s data for simplified orbit propagation
 keplerel = pd.read_csv('keplerel.csv', index_col=0)             # Planets' Kepler elements
 jovians = pd.read_csv('jovians.csv', index_col=0)               # Jovian planets' correction terms
 
@@ -25,7 +28,7 @@ def plotorbit(planet, t, ax):
         M = M + b * t ** 2 + c * np.cos(f * t) + s * np.sin(f * t)
     K = lambda E: E - e * np.sin(E) - M                         # Kepler's equation = 0
     dKdE = lambda E: 1 - e * np.cos(E)                          # Derivative
-    E = scp.optimize.newton(K, 0, fprime=dKdE)
+    E = scp.optimize.newton(K, 0, fprime=dKdE, tol=1.75e-8)
     # Coords. in heliocentric orbital plane
     x = np.array([a * (np.cos(E) - e),
                   a * np.sqrt(1 - e ** 2) * np.sin(E)])
@@ -50,8 +53,7 @@ def main():
         print('Invalid date format')
         return
     t = (TT-J2000).days / 36525                                # Centuries between J2000.0 and input final date
-    # E.M. Standish (1992)'s data for simplified orbit propagation
-    ax = plt.axes(projection='3d')
+    fig, ax = plt.subplots(subplot_kw={'projection':'3d'})
     for _, planet in keplerel.iterrows():
         plotorbit(planet, t, ax)
     ax.set_xlim3d(-25,25)
@@ -60,7 +62,7 @@ def main():
     ax.set_xlabel(r'$\hat{X}$: Vernal Equinox (AU)', labelpad=10)
     ax.set_ylabel(r'$\hat{Y}=\hat{Z}\times\hat{X}$ (AU)', labelpad=10)
     ax.set_zlabel(r'$\hat{Z}$: North Ecliptic Pole (AU)', labelpad=10)
-    ax.set_title(f'Solar System in J2000 Ecliptic Plane, {TT}(TT)')
+    ax.set_title(f'Solar System in J2000 Ecliptic Plane, noon {TT}(TT)')
     plt.legend(bbox_to_anchor = [1.8, .9])
     plt.savefig('solar_syst.png', dpi=200, bbox_inches='tight')
     os.system('pycharm64 solar_syst.png')

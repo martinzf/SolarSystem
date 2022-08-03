@@ -15,6 +15,4 @@ yaw=np.vstack((matrix(W),np.array([[0,0,1]])))
 matrix=lambda x:np.array([[0,np.cos(x),-np.sin(x)],[0,np.sin(x),np.cos(x)]])
 pitch=np.vstack((np.array([[1,0,0]]),matrix(I)))
 #ellipse=roll@ellipse
-fig=plt.figure(figsize=(8,8))
-plt.plot(ellipse[0],ellipse[1])
-plt.show()
+print(np.deg2rad(1e-6))
