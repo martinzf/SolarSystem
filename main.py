@@ -27,22 +27,20 @@ def keplerelements(planet, t):
     # Propagation of Kepler orbital elements using Standish's linear fit
     a = planet['a'] + t * planet['da/dt']
     e = planet['e'] + t * planet['de/dt']
+    w = np.deg2rad(planet['w'] + t * planet['dw/dt'])
     I = np.deg2rad(planet['I'] + t * planet['dI/dt'])
-    L = np.deg2rad(planet['L'] + t * planet['dL/dt'])
-    long_peri = np.deg2rad(planet['long.peri.'] + t * planet['dlong.peri./dt'])
     W = np.deg2rad(planet['W'] + t * planet['dW/dt'])
-    w = long_peri - W
-    M = L - long_peri
     if planet.name in jovians.index:                            # Jovian planets correction terms
         jovian = np.deg2rad(jovians.loc[planet.name])
         b = jovian['b']; c = jovian['c']; s = jovian['s']; f = jovian['f']
         M = M + b * t ** 2 + c * np.cos(f * t) + s * np.sin(f * t)
     K = lambda E: E - e * np.sin(E) - M                         # Kepler's equation = 0
     dKdE = lambda E: 1 - e * np.cos(E)                          # Derivative
-    E = scp.optimize.newton(K, planet['E'], fprime=dKdE, tol=1.75e-8, maxiter=100)
-    return [a, e, w, I, W, E]
+    E = scp.optimize.newton(K, planet['E'], fprime=dKdE, tol=1.75e-4, maxiter=100)
+    return [a, e, w, I, W, M, E]
 
-def plotorbit(planet, a, e, w, I, W, E, ax):
+def plotorbit(planet, ax):
+    a = planet['a']; e = planet['e']; w = planet['w']; I = planet['I']; W = planet['W']; E = planet['E']
     # Coords. in heliocentric orbital plane
     x = np.array([[a * (np.cos(E) - e)],
                   [a * np.sqrt(1 - e ** 2) * np.sin(E)]])
@@ -76,10 +74,9 @@ def main():
         ax.set_zlabel(r'$\hat{Z}$: North Ecliptic Pole (AU)', labelpad=10)
         ax.set_title(f'Solar System in J2000 Ecliptic Plane, noon {dt.date.today()}(TT)')
         t = start + n * np.sign(end - start)
-        for _, planet in keplerel.iterrows():
-            a, e, w, I, W, E = keplerelements(planet, t)
-            keplerel.loc[planet, 'E'] = E
-            plotorbit(planet, a, e, w, I, W, E, ax)
+        for idx, planet in keplerel.iterrows():
+            keplerel.loc[idx, ['a', 'e', 'w', 'I', 'W','E']] = keplerelements(planet, t)
+            plotorbit(planet, ax)
         ax.axes.legend(bbox_to_anchor=[1.8, .9])
         plt.savefig(f"frames/{n}.png")
     images = [Image.open(f"frames/{n}.png") for n in range(frames)]
