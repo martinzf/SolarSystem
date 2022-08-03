@@ -1,4 +1,5 @@
 import numpy as np
+import scipy as scp
 import pandas as pd
 import datetime as dt
 import os
@@ -19,13 +20,12 @@ def plotorbit(planet, t, ax):
     w = long_peri - W
     M = L - long_peri
     if planet.name in jovians.index:                            # Jovian planets correction terms
-        jovian = jovians.loc[planet.name]
-        b = np.deg2rad(jovian['b'])
-        c = np.deg2rad(jovian['c'])
-        s = np.deg2rad(jovian['s'])
-        f = np.deg2rad(jovian['f'])
+        jovian = np.deg2rad(jovians.loc[planet.name])
+        b = jovian['b']; c = jovian['c']; s = jovian['s']; f = jovian['f']
         M = M + b * t ** 2 + c * np.cos(f * t) + s * np.sin(f * t)
-    E=1.
+    K = lambda E: E - e * np.sin(E) - M                         # Kepler's equation = 0
+    dKdE = lambda E: 1 - e * np.cos(E)                          # Derivative
+    E = scp.optimize.newton(K, 0, fprime=dKdE)
     # Coords. in heliocentric orbital plane
     x = np.array([a * (np.cos(E) - e),
                   a * np.sqrt(1 - e ** 2) * np.sin(E)])
@@ -54,15 +54,15 @@ def main():
     ax = plt.axes(projection='3d')
     for _, planet in keplerel.iterrows():
         plotorbit(planet, t, ax)
-    ax.set_xlim3d(-30,30)
-    ax.set_ylim3d(-30,30)
-    ax.set_zlim3d(-30,30)
+    ax.set_xlim3d(-25,25)
+    ax.set_ylim3d(-25,25)
+    ax.set_zlim3d(-25,25)
     ax.set_xlabel(r'$\hat{X}$: Vernal Equinox (AU)', labelpad=10)
     ax.set_ylabel(r'$\hat{Y}=\hat{Z}\times\hat{X}$ (AU)', labelpad=10)
     ax.set_zlabel(r'$\hat{Z}$: North Ecliptic Pole (AU)', labelpad=10)
     ax.set_title(f'Solar System in J2000 Ecliptic Plane, {TT}(TT)')
     plt.legend(bbox_to_anchor = [1.8, .9])
-    plt.savefig('solar_syst.png',bbox_inches='tight')
+    plt.savefig('solar_syst.png', dpi=200, bbox_inches='tight')
     os.system('pycharm64 solar_syst.png')
 
 if __name__=="__main__":
