@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import datetime as dt
+import os
 import matplotlib.pyplot as plt
 plt.style.use(['science', 'notebook', 'grid'])
 
@@ -56,12 +57,13 @@ def main():
     ax.set_xlim3d(-30,30)
     ax.set_ylim3d(-30,30)
     ax.set_zlim3d(-30,30)
-    ax.set_xlabel(r'$\hat{X}$, Vernal Equinox (AU)', labelpad=10)
-    ax.set_ylabel(r'$\hat{Z}\times\hat{X}$ (AU)', labelpad=10)
-    ax.set_zlabel(r'$\hat{Z}$, North Ecliptic Pole (AU)', labelpad=10)
+    ax.set_xlabel(r'$\hat{X}$: Vernal Equinox (AU)', labelpad=10)
+    ax.set_ylabel(r'$\hat{Y}=\hat{Z}\times\hat{X}$ (AU)', labelpad=10)
+    ax.set_zlabel(r'$\hat{Z}$: North Ecliptic Pole (AU)', labelpad=10)
     ax.set_title(f'Solar System in J2000 Ecliptic Plane, {TT}(TT)')
     plt.legend(bbox_to_anchor = [1.8, .9])
-    plt.show()
+    plt.savefig('solar_syst.png',bbox_inches='tight')
+    os.system('pycharm64 solar_syst.png')
 
 if __name__=="__main__":
     main()
