@@ -12,7 +12,18 @@ plt.style.use(['science', 'notebook', 'grid'])
 keplerel = pd.read_csv('keplerel.csv', index_col=0)             # Planets' Kepler elements
 jovians = pd.read_csv('jovians.csv', index_col=0)               # Jovian planets' correction terms
 
-def keplerelements(planet, t):
+def getdate():
+    J2000 = dt.date(2000, 1, 1)                                 # Reference epoch (1st July 2000, ~12:00 GMT)
+    print('Input a date between 3000 BC and 3000 AD')
+    try:
+        TT = dt.date.fromisoformat(input('Date yyyy-mm-dd: '))  # Terrestrial time, approx JPL ephemeris time
+    except ValueError:
+        print('Invalid date format')
+        return
+    t = (TT - J2000).days / 36525                               # Centuries between J2000.0 and input final date
+    return t
+
+def keplerelements(planet, t, E0=0):
     # Propagation of Kepler orbital elements using Standish's linear fit
     a = planet['a'] + t * planet['da/dt']
     e = planet['e'] + t * planet['de/dt']
@@ -28,10 +39,10 @@ def keplerelements(planet, t):
         M = M + b * t ** 2 + c * np.cos(f * t) + s * np.sin(f * t)
     K = lambda E: E - e * np.sin(E) - M                         # Kepler's equation = 0
     dKdE = lambda E: 1 - e * np.cos(E)                          # Derivative
-    E = scp.optimize.newton(K, 0, fprime=dKdE, tol=1.75e-8)
+    E = scp.optimize.newton(K, E0, fprime=dKdE, tol=1.75e-8)
     # Coords. in heliocentric orbital plane
-    x = np.array([a * (np.cos(E) - e),
-                  a * np.sqrt(1 - e ** 2) * np.sin(E)])
+    x = np.array([[a * (np.cos(E) - e)],
+                  [a * np.sqrt(1 - e ** 2) * np.sin(E)]])
     fullrot = np.linspace(0, 2 * np.pi, 100)
     ellipse = np.vstack((a * (np.cos(fullrot) - e),
                          a * np.sqrt(1 - e ** 2) * np.sin(fullrot)))
@@ -46,32 +57,19 @@ def keplerelements(planet, t):
     ellipsecl = rot @ ellipse
     return [xecl, ellipsecl]
 
-def animate(i):
-    ax.plot(xecl[0], xecl[1], xecl[2], 'o', label=planet.name)
-    ax.plot(ellipsecl[0], ellipsecl[1], ellipsecl[2], 'k', linewidth=1)
-
-def main():
-    J2000 = dt.date(2000, 1, 1)                                # Reference epoch (1st July 2000, ~12:00 GMT)
-    print('Input a date between 3000 BC and 3000 AD')
-    try:
-        TT = dt.date.fromisoformat(input('Date yyyy-mm-dd: ')) # Terrestrial time, approx JPL ephemeris time
-    except ValueError:
-        print('Invalid date format')
-        return
-    t = (TT-J2000).days / 36525                                # Centuries between J2000.0 and input final date
-    fig, ax = plt.subplots(subplot_kw={'projection':'3d'})
-    for _, planet in keplerel.iterrows():
-        plotorbit(planet, t, ax)
-    ax.set_xlim3d(-25,25)
-    ax.set_ylim3d(-25,25)
-    ax.set_zlim3d(-25,25)
+def plotorbits():
+    fig, ax = plt.subplots(subplot_kw={'projection': '3d'})
+    ax.set_xlim3d(-25, 25)
+    ax.set_ylim3d(-25, 25)
+    ax.set_zlim3d(-25, 25)
     ax.set_xlabel(r'$\hat{X}$: Vernal Equinox (AU)', labelpad=10)
     ax.set_ylabel(r'$\hat{Y}=\hat{Z}\times\hat{X}$ (AU)', labelpad=10)
     ax.set_zlabel(r'$\hat{Z}$: North Ecliptic Pole (AU)', labelpad=10)
     ax.set_title(f'Solar System in J2000 Ecliptic Plane, noon {TT}(TT)')
-    plt.legend(bbox_to_anchor = [1.8, .9])
-    plt.savefig('solar_syst.png', dpi=200, bbox_inches='tight')
-    os.system('pycharm64 solar_syst.png')
+    plt.legend(bbox_to_anchor=[1.8, .9])
+
+def main():
+
 
 if __name__=="__main__":
     main()
