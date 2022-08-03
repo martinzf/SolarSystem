@@ -30,6 +30,7 @@ def keplerelements(planet, t):
     w = np.deg2rad(planet['w'] + t * planet['dw/dt'])
     I = np.deg2rad(planet['I'] + t * planet['dI/dt'])
     W = np.deg2rad(planet['W'] + t * planet['dW/dt'])
+    M = np.deg2rad(planet['M'] + t * planet['dM/dt'])
     if planet.name in jovians.index:                            # Jovian planets correction terms
         jovian = np.deg2rad(jovians.loc[planet.name])
         b = jovian['b']; c = jovian['c']; s = jovian['s']; f = jovian['f']
