@@ -12,7 +12,7 @@ plt.style.use(['science', 'notebook', 'grid'])
 keplerel = pd.read_csv('keplerel.csv', index_col=0)             # Planets' Kepler elements
 jovians = pd.read_csv('jovians.csv', index_col=0)               # Jovian planets' correction terms
 
-def plotorbit(planet, t, ax):
+def keplerelements(planet, t):
     # Propagation of Kepler orbital elements using Standish's linear fit
     a = planet['a'] + t * planet['da/dt']
     e = planet['e'] + t * planet['de/dt']
@@ -36,11 +36,17 @@ def plotorbit(planet, t, ax):
     ellipse = np.vstack((a * (np.cos(fullrot) - e),
                          a * np.sqrt(1 - e ** 2) * np.sin(fullrot)))
     # Coords. in J2000 ecliptic plane, rotation matrix (anticlock z (w), anticlock x (I), anticlock z (W))
-    rot = np.array([[np.cos(w) * np.cos(W) - np.sin(w) * np.sin(W) * np.cos(I), -np.sin(w) * np.cos(W) - np.cos(w) * np.sin(W) * np.cos(I)],
-                    [np.cos(w) * np.sin(W) + np.sin(w) * np.cos(W) * np.cos(I), -np.sin(w) * np.sin(W) + np.cos(w) * np.cos(W) * np.cos(I)],
-                    [np.sin(w) * np.sin(I)                                    , np.cos(w) * np.sin(I)                                     ]])
+    cw = np.cos(w); sw = np.sin(w)
+    cI = np.cos(I); sI = np.sin(I)
+    cW = np.cos(W); sW = np.sin(W)
+    rot = np.array([[cw * cW - sw * sW * cI, -sw * cW - cw * sW * cI],
+                    [cw * sW + sw * cW * cI, -sw * sW + cw * cW * cI],
+                    [sw * sI               ,  cw * sI               ]])
     xecl = rot @ x
     ellipsecl = rot @ ellipse
+    return [xecl, ellipsecl]
+
+def animate(i):
     ax.plot(xecl[0], xecl[1], xecl[2], 'o', label=planet.name)
     ax.plot(ellipsecl[0], ellipsecl[1], ellipsecl[2], 'k', linewidth=1)
 
