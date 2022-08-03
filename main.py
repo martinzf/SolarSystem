@@ -4,8 +4,7 @@ import pandas as pd
 import datetime as dt
 import os
 import matplotlib.pyplot as plt
-from matplotlib import animation
-from matplotlib.animation import PillowWriter
+from PIL import Image
 plt.style.use(['science', 'notebook', 'grid'])
 
 # E.M. Standish (1992)'s data for simplified orbit propagation
@@ -40,6 +39,9 @@ def keplerelements(planet, t, E0=0):
     K = lambda E: E - e * np.sin(E) - M                         # Kepler's equation = 0
     dKdE = lambda E: 1 - e * np.cos(E)                          # Derivative
     E = scp.optimize.newton(K, E0, fprime=dKdE, tol=1.75e-8)
+    return [a, e, w, I, W, E]
+
+def plotorbit(planet, a, e, w, I, W, E, ax):
     # Coords. in heliocentric orbital plane
     x = np.array([[a * (np.cos(E) - e)],
                   [a * np.sqrt(1 - e ** 2) * np.sin(E)]])
@@ -52,24 +54,33 @@ def keplerelements(planet, t, E0=0):
     cW = np.cos(W); sW = np.sin(W)
     rot = np.array([[cw * cW - sw * sW * cI, -sw * cW - cw * sW * cI],
                     [cw * sW + sw * cW * cI, -sw * sW + cw * cW * cI],
-                    [sw * sI               ,  cw * sI               ]])
+                    [sw * sI, cw * sI]])
     xecl = rot @ x
     ellipsecl = rot @ ellipse
-    return [xecl, ellipsecl]
-
-def plotorbits():
-    fig, ax = plt.subplots(subplot_kw={'projection': '3d'})
-    ax.set_xlim3d(-25, 25)
-    ax.set_ylim3d(-25, 25)
-    ax.set_zlim3d(-25, 25)
-    ax.set_xlabel(r'$\hat{X}$: Vernal Equinox (AU)', labelpad=10)
-    ax.set_ylabel(r'$\hat{Y}=\hat{Z}\times\hat{X}$ (AU)', labelpad=10)
-    ax.set_zlabel(r'$\hat{Z}$: North Ecliptic Pole (AU)', labelpad=10)
-    ax.set_title(f'Solar System in J2000 Ecliptic Plane, noon {TT}(TT)')
-    plt.legend(bbox_to_anchor=[1.8, .9])
+    ax.plot(xecl[0], xecl[1], xecl[2], 'o', label=planet.name)
+    ax.plot(ellipsecl[0], ellipsecl[1], ellipsecl[2], 'k', lw=1)
 
 def main():
-
+    t = getdate()
+    fig, ax = plt.subplots(subplot_kw={'projection': '3d'})
+    frames = 3
+    for n in range(frames):
+        plt.cla()
+        ax.set_xlim3d(-25, 25)
+        ax.set_ylim3d(-25, 25)
+        ax.set_zlim3d(-25, 25)
+        ax.set_xlabel(r'$\hat{X}$: Vernal Equinox (AU)', labelpad=10)
+        ax.set_ylabel(r'$\hat{Y}=\hat{Z}\times\hat{X}$ (AU)', labelpad=10)
+        ax.set_zlabel(r'$\hat{Z}$: North Ecliptic Pole (AU)', labelpad=10)
+        ax.set_title(f'Solar System in J2000 Ecliptic Plane, noon {dt.date.today()}(TT)')
+        for _, planet in keplerel.iterrows():
+            a, e, w, I, W, E = keplerelements(planet, t)
+            plotorbit(planet, a, e, w, I, W, E, ax)
+        ax.axes.legend(bbox_to_anchor=[1.8, .9])
+        plt.savefig(f"frames/{n}.png")
+    images = [Image.open(f"frames/{n}.png") for n in range(frames)]
+    images[0].save('solar_system.gif', save_all=True, append_images=images[1:], duration=100, loop=0)
+    os.system('pycharm64 solar_system.gif')
 
 if __name__=="__main__":
     main()

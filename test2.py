@@ -22,7 +22,7 @@ ax.set_zlabel("z")
 
 lines = []
 for index in range(2):
-    lobj = ax.plot([],[],'o')[0]
+    lobj = ax.scatter3D([],[],[],'o')[0]
     lines.append(lobj)
 
 def init():
