@@ -38,6 +38,9 @@ def init():
     ax.set_xlim3d(-3, 3)
     ax.set_ylim3d(-3, 3)
     ax.set_zlim3d(-3, 3)
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_zlabel('z')
     for ln1 in lns1:
         ln1.set_data([],[])
     for ln2 in lns2:
