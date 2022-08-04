@@ -1,10 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+import os
 
-fig, ax = plt.subplots(subplot_kw={'projection':'3d'})
-xdata1, ydata1, zdata1 = [], [], []
-xdata2, ydata2, zdata2 = [], [], []
+fig, ax = plt.subplots(figsize=(20.5,10), subplot_kw={'projection':'3d'})
 ln1, = ax.plot([], [], [], 'o')
 ln2, = ax.plot([], [], [], 'k', lw=1)
 
@@ -23,7 +22,7 @@ def plotorbit(E):
                     [sw * sI, cw * sI]])
     xecl = rot @ x
     ellipsecl = rot @ ellipse
-    return xecl, ellipsecl
+    return [xecl], [ellipsecl]
 
 def init():
     ax.set_xlim3d(-3, 3)
@@ -33,11 +32,14 @@ def init():
 
 def animate(frame):
     x, el = plotorbit(frame)
-    ln1.set_data(x[0], x[1])
-    ln1.set_3d_properties(x[2])
-    ln2.set_data(el[0], el[1])
-    ln2.set_3d_properties(el[2])
+    for i in x:
+        ln1.set_data(i[0], i[1])
+        ln1.set_3d_properties(i[2])
+    for i in el:
+        ln2.set_data(i[0], i[1])
+        ln2.set_3d_properties(i[2])
     return ln1, ln2
 
 ani = FuncAnimation(fig, animate, frames=np.linspace(0, 2*np.pi, 128), init_func=init, blit=True)
-plt.show()
+ani.save('test.gif', writer='pillow', fps=30, dpi=100)
+os.system('"test.gif"')
