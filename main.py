@@ -14,6 +14,7 @@ jovians = pd.read_csv('jovians.csv', index_col=0)               # Jovian planets
 ellipsepoints = 100
 anidpi = 100
 anifps = 30
+aniframes = 151
 fig, ax = plt.subplots(figsize=(20.5,10), subplot_kw={'projection':'3d'})
 lns1 = []
 lns2 = []
@@ -36,32 +37,30 @@ def getdate():
         exit()
     start = (dat.date.today() - J2000).days                     # Days between today and J2000
     end = (TT - J2000).days                                     # Days between input final date and J2000
-    return [start, end]
+    return start, end
 
-def keplerelements(planet, dt):
+def calcorbit(planet, t):
     # Propagation of Kepler orbital elements using Standish's linear fit, dt in centuries
-    keplerel.loc[planet.name, 'a'] = planet['a'] + dt * planet['da/dt']
-    e = planet['e'] + dt * planet['de/dt']
-    keplerel.loc[planet.name, 'e'] = e
-    keplerel.loc[planet.name, 'w'] = planet['w'] + dt * planet['dw/dt']
-    keplerel.loc[planet.name, 'I'] = planet['I'] + dt * planet['dI/dt']
-    keplerel.loc[planet.name, 'W'] = planet['W'] + dt * planet['dW/dt']
-    M = planet['M'] + dt * planet['dM/dt']
+    a = planet['a'] + t * planet['da/dt']
+    e = planet['e'] + t * planet['de/dt']
+    w = planet['w'] + t * planet['dw/dt']
+    I = planet['I'] + t * planet['dI/dt']
+    W = planet['W'] + t * planet['dW/dt']
+    M = planet['M'] + t * planet['dM/dt']
     if planet.name in jovians.index:                            # Jovian planets correction terms
         jovian = jovians.loc[planet.name]
-        b = jovian['b']; c = jovian['c']; s = jovian['s']; f = jovian['f']
-        M = M + b * dt ** 2 + c * np.cos(f * dt) + s * np.sin(f * dt)
+        b, c, s, f = jovian['b'], jovian['c'], jovian['s'], jovian['f']
+        M += b * t ** 2 + c * np.cos(f * t) + s * np.sin(f * t)
     M = M % (2 * np.pi)                                         # Modulo M between -180º and 180º
     if M > np.pi:
-        M = M - 2 * np.pi
+        M -= 2 * np.pi
+    elif M < -np.pi:
+        M += 2 * np.pi
     keplerel.loc[planet.name, 'M'] = M
     K = lambda E: E - e * np.sin(E) - M                         # Kepler's equation = 0
     dKdE = lambda E: 1 - e * np.cos(E)                          # Derivative
     E = scp.optimize.newton(K, planet['E'], fprime=dKdE, tol=1.75e-8)
     keplerel.loc[planet.name, 'E'] = E
-
-def calcorbit(planet):
-    a, e, w, I, W, E = planet['a'], planet['e'], planet['w'], planet['I'], planet['W'], planet['E']
     # Coords. in heliocentric orbital plane
     x = np.array([[a * (np.cos(E) - e)],
                   [a * np.sqrt(1 - e ** 2) * np.sin(E)]])
@@ -92,12 +91,11 @@ def init():
         ln2.set_data([],[])
     return *lns1, *lns2
 
-def animate(dt):
+def animate(t):
     x = np.array([[],[],[]])
     el = np.array([[],[],[]])
     for _, planet in keplerel.iterrows():
-        keplerelements(planet, dt)
-        xecl, ellipsecl = calcorbit(planet)
+        xecl, ellipsecl = calcorbit(planet, t)
         x = np.hstack((x, xecl))
         el = np.hstack((el,ellipsecl))
     for idx, ln1 in enumerate(lns1):
@@ -110,13 +108,14 @@ def animate(dt):
     return *lns1, *lns2
 
 def main():
-    '''start, end = getdate()
-    fig, ax = plt.subplots(subplot_kw={'projection': '3d'})
-    dt = start
-    datetime = dat.datetime.combine(dat.date.today(), dat.time(12))'''
-    ani = FuncAnimation(fig, animate, frames=np.ones(10), init_func=init, blit=True)
-    ani.save('test.gif', writer='pillow', fps=anifps, dpi=anidpi)
-    os.system('"test.gif"')
+    start, end = getdate()
+    datetime = dat.datetime.combine(dat.date.today(), dat.time(12))
+    dt = (end - start) / (aniframes - 1)
+    frames = np.concatenate(([start / 36525], dt * np.ones(aniframes - 1) / 36525))
+    ani = FuncAnimation(fig, animate, frames=frames, init_func=init, blit=True)
+    ani.save('solar_system.gif', writer='pillow', fps=anifps, dpi=anidpi)
+    os.system('"solar_system.gif"')
+    print(end-start)
 
 if __name__=="__main__":
     main()
