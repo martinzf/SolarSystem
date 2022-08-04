@@ -13,12 +13,12 @@ keplerel = pd.read_csv('keplerel.csv', index_col=0)             # Planets' Keple
 jovians = pd.read_csv('jovians.csv', index_col=0)               # Jovian planets' correction terms
 ellipsepoints = 100
 anidpi = 100
-anifps = 30
-aniframes = 151
+anifps = 50
+aniframes = 150
 fig, ax = plt.subplots(figsize=(20.5,10), subplot_kw={'projection':'3d'})
 lns1 = []
 lns2 = []
-for planet, _ in keplerel.iterrows():
+for planet in keplerel.index():
     lobj, = ax.plot([],[],[],'o',label=planet)
     lns1.append(lobj)
     lobj, = ax.plot([], [], [], 'k', lw=1)
@@ -58,8 +58,7 @@ def calcorbit(planet, t):
         M += 2 * np.pi
     K = lambda E: E - e * np.sin(E) - M                         # Kepler's equation = 0
     dKdE = lambda E: 1 - e * np.cos(E)                          # Derivative
-    E = scp.optimize.newton(K, planet['E'], fprime=dKdE, tol=1.75e-8)
-    keplerel.loc[planet.name, 'E'] = E
+    E = scp.optimize.newton(K, M, fprime=dKdE, tol=1.75e-8)
     # Coords. in heliocentric orbital plane
     x = np.array([[a * (np.cos(E) - e)],
                   [a * np.sqrt(1 - e ** 2) * np.sin(E)]])
@@ -109,7 +108,7 @@ def animate(t):
 def main():
     start, end = getdate()
     datetime = dat.datetime.combine(dat.date.today(), dat.time(12))
-    ani = FuncAnimation(fig, animate, frames=np.linspace(start,end,aniframes), init_func=init, blit=True)
+    ani = FuncAnimation(fig, animate, frames=np.linspace(start,end,aniframes), init_func=init, interval=50, blit=True)
     ani.save('solar_system.gif', writer='pillow', fps=anifps, dpi=anidpi)
     os.system('"solar_system.gif"')
 
