@@ -35,8 +35,8 @@ def getdate():
     if TT > dat.date(3000,12,31):
         print('Date outside specified range')
         exit()
-    start = (dat.date.today() - J2000).days                     # Days between today and J2000
-    end = (TT - J2000).days                                     # Days between input final date and J2000
+    start = (dat.date.today() - J2000).days / 36525             # Days between today and J2000
+    end = (TT - J2000).days / 36525                             # Days between input final date and J2000
     return start, end
 
 def calcorbit(planet, t):
@@ -56,7 +56,6 @@ def calcorbit(planet, t):
         M -= 2 * np.pi
     elif M < -np.pi:
         M += 2 * np.pi
-    keplerel.loc[planet.name, 'M'] = M
     K = lambda E: E - e * np.sin(E) - M                         # Kepler's equation = 0
     dKdE = lambda E: 1 - e * np.cos(E)                          # Derivative
     E = scp.optimize.newton(K, planet['E'], fprime=dKdE, tol=1.75e-8)
@@ -110,12 +109,9 @@ def animate(t):
 def main():
     start, end = getdate()
     datetime = dat.datetime.combine(dat.date.today(), dat.time(12))
-    dt = (end - start) / (aniframes - 1)
-    frames = np.concatenate(([start / 36525], dt * np.ones(aniframes - 1) / 36525))
-    ani = FuncAnimation(fig, animate, frames=frames, init_func=init, blit=True)
+    ani = FuncAnimation(fig, animate, frames=np.linspace(start,end,aniframes), init_func=init, blit=True)
     ani.save('solar_system.gif', writer='pillow', fps=anifps, dpi=anidpi)
     os.system('"solar_system.gif"')
-    print(end-start)
 
 if __name__=="__main__":
     main()
