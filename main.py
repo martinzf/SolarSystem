@@ -11,10 +11,10 @@ plt.style.use(['science', 'notebook', 'grid'])
 # E.M. Standish (1992)'s data for simplified orbit propagation
 keplerel = pd.read_csv('keplerel.csv', index_col=0)             # Planets' Kepler elements
 jovians = pd.read_csv('jovians.csv', index_col=0)               # Jovian planets' correction terms
-ellipsepoints = 100
+ellipsepoints = 50                                              # Orbit resolution
 anidpi = 100
 anifps = 50
-aniframes = 250
+aniframes = 150
 fig, ax = plt.subplots(figsize=(20.5,10), subplot_kw={'projection':'3d'})
 lns1 = []
 lns2 = []
@@ -84,11 +84,12 @@ def init():
     ax.set_ylabel(r'$\hat{Y}=\hat{Z}\times\hat{X}$ (AU)', labelpad=10)
     ax.set_zlabel(r'$\hat{Z}$: North Ecliptic Pole (AU)', labelpad=10)
     for ln1 in lns1:
-        ln1.set_data([],[])
+        ln1.set_data([], [])
     for ln2 in lns2:
-        ln2.set_data([],[])
+        ln2.set_data([], [])
     return *lns1, *lns2
 
+legend = plt.legend()
 def animate(t):
     x = np.array([[], [], []])
     el = np.array([[], [], []])
@@ -99,15 +100,16 @@ def animate(t):
     for idx, ln1 in enumerate(lns1):
         ln1.set_data([x[0, idx]], [x[1, idx]])
         ln1.set_3d_properties([x[2, idx]])
+        ln1.set_label(keplerel.index[idx])
     for n, ln2 in enumerate(lns2):
         idx = np.arange(ellipsepoints * n, ellipsepoints * (n + 1))
         ln2.set_data(el[0, idx], el[1, idx])
         ln2.set_3d_properties(el[2, idx])
+    ax.legend(bbox_to_anchor=(1.5, .7))
     return *lns1, *lns2
 
 def main():
     start, end = getdate()
-    datetime = dat.datetime.combine(dat.date.today(), dat.time(12))
     ani = FuncAnimation(fig, animate, frames=np.linspace(start, end, aniframes), init_func=init, interval=50, blit=True)
     ani.save('solar_system.gif', writer='pillow', fps=anifps, dpi=anidpi)
     os.system('"solar_system.gif"')
