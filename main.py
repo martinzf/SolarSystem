@@ -11,7 +11,8 @@ plt.style.use(['science', 'notebook', 'grid'])
 # E.M. Standish (1992)'s data for simplified orbit propagation
 keplerel = pd.read_csv('keplerel.csv', index_col=0)             # Planets' Kepler elements
 jovians = pd.read_csv('jovians.csv', index_col=0)               # Jovian planets' correction terms
-ellipsepoints = 50                                              # Orbit resolution
+J2000 = dat.date(2000,1,1)                                      # Reference epoch (1st July 2000, 12:00 GMT)
+ellipsepoints = 50                                              # Orbit line resolution
 anidpi = 100
 anifps = 50
 aniframes = 150
@@ -25,7 +26,6 @@ for planet in keplerel.index:
     lns2.append(lobj)
 
 def getdate():
-    J2000 = dat.date(2000,1,1)                                  # Reference epoch (1st July 2000, 12:00 GMT)
     print('Input a date between 3000 BC and 3000 AD')
     try:
         TT = dat.date.fromisoformat(input('Date yyyy-mm-dd: ')) # Terrestrial time, approx. JPL ephemeris time
@@ -35,21 +35,21 @@ def getdate():
     if TT > dat.date(3000,12,31):
         print('Date outside specified range')
         exit()
-    start = (dat.date.today() - J2000).days / 36525             # Days between today and J2000
-    end = (TT - J2000).days / 36525                             # Days between input final date and J2000
+    start = (dat.date.today() - J2000).days / 36525             # Centuries between today and J2000
+    end = (TT - J2000).days / 36525                             # Centuries between input final date and J2000
     return start, end
 
 def calcorbit(planet, t):
-    # Propagation of Kepler orbital elements using Standish's linear fit, dt in centuries
-    a = planet['a'] + t * planet['da/dt']
-    e = planet['e'] + t * planet['de/dt']
+    # Propagation of Kepler orbital elements using Standish's linear fit, t in centuries
+    a = planet['a'] + t * planet['da/dt']                       # Astronomical units
+    e = planet['e'] + t * planet['de/dt']                       # Radians
     w = planet['w'] + t * planet['dw/dt']
     I = planet['I'] + t * planet['dI/dt']
     W = planet['W'] + t * planet['dW/dt']
     M = planet['M'] + t * planet['dM/dt']
     if planet.name in jovians.index:                            # Jovian planets correction terms
         jovian = jovians.loc[planet.name]
-        b, c, s, f = jovian['b'], jovian['c'], jovian['s'], jovian['f']
+        b, c, s, f = jovian['b'], jovian['c'], jovian['s'], jovian['f'] # Radians
         M += b * t ** 2 + c * np.cos(f * t) + s * np.sin(f * t)
     M = M % (2 * np.pi)                                         # Modulo M between -180º and 180º
     if M > np.pi:
@@ -89,7 +89,6 @@ def init():
         ln2.set_data([], [])
     return *lns1, *lns2
 
-legend = plt.legend()
 def animate(t):
     x = np.array([[], [], []])
     el = np.array([[], [], []])
@@ -106,6 +105,7 @@ def animate(t):
         ln2.set_data(el[0, idx], el[1, idx])
         ln2.set_3d_properties(el[2, idx])
     ax.legend(bbox_to_anchor=(1.5, .7))
+    ax.set_title(f'Solar System, ECLIPJ2000 reference frame, {J2000 + dat.timedelta(days=t*36525)} (TT)')
     return *lns1, *lns2
 
 def main():
