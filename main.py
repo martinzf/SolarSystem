@@ -104,8 +104,9 @@ def animate(t):
         idx = np.arange(ellipsepoints * n, ellipsepoints * (n + 1))
         ln2.set_data(el[0, idx], el[1, idx])
         ln2.set_3d_properties(el[2, idx])
-    ax.legend(bbox_to_anchor=(1.5, .7))
-    ax.set_title(f'Solar System, ECLIPJ2000 reference frame, {J2000 + dat.timedelta(days=t*36525)} (TT)')
+    ax.legend(bbox_to_anchor=(1.5, .8))
+    ax.set_title(f'Solar System, ECLIPJ2000 reference frame, {J2000 + dat.timedelta(days=t*36525)} (TT)',
+                 fontsize=20)
     return *lns1, *lns2
 
 def main():
