@@ -3,6 +3,7 @@ import scipy as scp
 import pandas as pd
 import datetime as dat
 import os
+import numba
 import matplotlib.pyplot as plt
 from PIL import Image
 plt.style.use(['science', 'notebook', 'grid'])
