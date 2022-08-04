@@ -49,8 +49,8 @@ def keplerelements(planet, dt):
     E = scp.optimize.newton(K, planet['E'], fprime=dKdE, tol=1.75e-8)
     keplerel.loc[planet.name, 'E'] = E
 
-def plotorbit(planet, ax):
-    a = planet['a']; e = planet['e']; w = planet['w']; I = planet['I']; W = planet['W']; E = planet['E']
+def calcorbit(planet, ax):
+    a, e, w, I, W, E = planet['a'], planet['e'], planet['w'], planet['I'], planet['W'], planet['E']
     # Coords. in heliocentric orbital plane
     x = np.array([[a * (np.cos(E) - e)],
                   [a * np.sqrt(1 - e ** 2) * np.sin(E)]])
@@ -58,9 +58,9 @@ def plotorbit(planet, ax):
     ellipse = np.vstack((a * (np.cos(fullrot) - e),
                          a * np.sqrt(1 - e ** 2) * np.sin(fullrot)))
     # Coords. in J2000 ecliptic plane, rotation matrix (anticlock z (w), anticlock x (I), anticlock z (W))
-    cw = np.cos(w); sw = np.sin(w)
-    cI = np.cos(I); sI = np.sin(I)
-    cW = np.cos(W); sW = np.sin(W)
+    cw, sw = np.cos(w), np.sin(w)
+    cI, sI = np.cos(I), np.sin(I)
+    cW, sW = np.cos(W), np.sin(W)
     rot = np.array([[cw * cW - sw * sW * cI, -sw * cW - cw * sW * cI],
                     [cw * sW + sw * cW * cI, -sw * sW + cw * cW * cI],
                     [sw * sI, cw * sI]])
@@ -79,7 +79,7 @@ def plotssyst(dt, datetime, frame, ax):
     ax.set_zlabel(r'$\hat{Z}$: North Ecliptic Pole (AU)', labelpad=10)
     for _, planet in keplerel.iterrows():
         keplerelements(planet, dt / 36525)
-        plotorbit(planet, ax)
+        calcorbit(planet, ax)
     ax.set_title(f'Solar System in J2000 Ecliptic Plane, {datetime} (TT)')
     ax.axes.legend(bbox_to_anchor=[1.8, .9])
     plt.savefig(f"frames/{frame}.png", bbox_inches='tight')
