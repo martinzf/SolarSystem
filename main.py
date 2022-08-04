@@ -96,6 +96,7 @@ def main():
         plotssyst(dt, datetime, frame, ax)
     images = [Image.open(f"frames/{n}.png") for n in range(frames)]
     images[0].save(fp='solar_system.gif', format='GIF', save_all=True, append_images=images[1:], duration=17, loop=0)
+    os.system('"solar_system.gif')
 
 if __name__=="__main__":
     main()
