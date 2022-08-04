@@ -76,7 +76,7 @@ def plotssyst(dt, datetime, frame, ax):
     ax.set_xlabel(r'$\hat{X}$: Vernal Equinox (AU)', labelpad=10)
     ax.set_ylabel(r'$\hat{Y}=\hat{Z}\times\hat{X}$ (AU)', labelpad=10)
     ax.set_zlabel(r'$\hat{Z}$: North Ecliptic Pole (AU)', labelpad=10)
-    for _, planet in keplerel.iterrows():
+    for _, planet in keplerel.itertuples():
         keplerelements(planet, dt / 36525)
         plotorbit(planet, ax)
     ax.set_title(f'Solar System in J2000 Ecliptic Plane, {datetime} (TT)')

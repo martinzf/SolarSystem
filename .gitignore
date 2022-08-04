@@ -1,2 +1,4 @@
-venv/
-test.py
+venv
+frames/*
+!frames/0.png
+solar_system.gif
