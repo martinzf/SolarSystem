@@ -41,14 +41,14 @@ def getdate():
 
 def calcorbit(planet, t):
     # Propagation of Kepler orbital elements using Standish's linear fit, t in centuries
-    a = planet['a'] + t * planet['da/dt']                       # Astronomical units
-    e = planet['e'] + t * planet['de/dt']                       # Radians
-    w = planet['w'] + t * planet['dw/dt']
-    I = planet['I'] + t * planet['dI/dt']
-    W = planet['W'] + t * planet['dW/dt']
-    M = planet['M'] + t * planet['dM/dt']
+    a = planet[1] + t * planet[2]                       # Astronomical units
+    e = planet[3] + t * planet[4]                       # Radians
+    w = planet[5] + t * planet[6]
+    I = planet[7] + t * planet[8]
+    W = planet[9] + t * planet[10]
+    M = planet[11] + t * planet[12]
     if planet.name in jovians.index:                            # Jovian planets correction terms
-        jovian = jovians.loc[planet.name]
+        jovian = jovians.loc[planet[0]]
         b, c, s, f = jovian['b'], jovian['c'], jovian['s'], jovian['f'] # Radians
         M += b * t ** 2 + c * np.cos(f * t) + s * np.sin(f * t)
     M = M % (2 * np.pi)                                         # Modulo M between -180º and 180º
@@ -92,7 +92,7 @@ def init():
 def animate(t):
     x = np.array([[], [], []])
     el = np.array([[], [], []])
-    for _, planet in keplerel.iterrows():
+    for planet in keplerel.itertuples():
         xecl, ellipsecl = calcorbit(planet, t)
         x = np.hstack((x, xecl))
         el = np.hstack((el,ellipsecl))
