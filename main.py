@@ -47,7 +47,7 @@ def calcorbit(planet, t):
     I = planet[7] + t * planet[8]
     W = planet[9] + t * planet[10]
     M = planet[11] + t * planet[12]
-    if planet.name in jovians.index:                            # Jovian planets correction terms
+    if planet[0] in jovians.index:                              # Jovian planets correction terms
         jovian = jovians.loc[planet[0]]
         b, c, s, f = jovian['b'], jovian['c'], jovian['s'], jovian['f'] # Radians
         M += b * t ** 2 + c * np.cos(f * t) + s * np.sin(f * t)
