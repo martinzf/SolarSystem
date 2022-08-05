@@ -119,7 +119,10 @@ def animate(t):
 
 def main():
     start, end = getdate()
-    ani = FuncAnimation(fig, animate, frames=np.linspace(start, end, aniframes), init_func=init, interval=50, blit=True)
+    frames = np.concatenate((start * np.ones(int(anifps / 2)),  # Linger on starting image
+                             np.linspace(start, end, aniframes - anifps),
+                             end * np.ones(int(anifps / 2))))   # Linger on final image
+    ani = FuncAnimation(fig, animate, frames=frames, init_func=init, interval=50, blit=True)
     ani.save('solar_system.gif', writer='pillow', fps=anifps, dpi=anidpi)
     os.system('"solar_system.gif"')
 
