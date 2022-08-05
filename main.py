@@ -17,6 +17,7 @@ anidpi = 100
 anifps = 50
 aniframes = 150
 fig, ax = plt.subplots(figsize=(20.5,10), subplot_kw={'projection':'3d'})
+axlims = keplerel.iloc[-1, 0]
 lns1 = []
 lns2 = []
 for planet in keplerel.index:
@@ -80,9 +81,9 @@ def calcorbit(planet, t):
     return xecl, ellipsecl
 
 def init():
-    ax.set_xlim3d(-25, 25)
-    ax.set_ylim3d(-25, 25)
-    ax.set_zlim3d(-25, 25)
+    ax.set_xlim3d(-axlims, axlims)
+    ax.set_ylim3d(-axlims, axlims)
+    ax.set_zlim3d(-axlims, axlims)
     ax.set_xlabel(r'$\hat{X}$: Vernal Equinox (AU)', labelpad=10)
     ax.set_ylabel(r'$\hat{Y}=\hat{Z}\times\hat{X}$ (AU)', labelpad=10)
     ax.set_zlabel(r'$\hat{Z}$: North Ecliptic Pole (AU)', labelpad=10)
