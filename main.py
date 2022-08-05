@@ -42,7 +42,7 @@ def getdate():
 def calcorbit(planet, t):
     # Propagation of Kepler orbital elements using Standish's linear fit
     # Centuries, astronomical units, radians
-    a, e, w, I, W, M = np.array(planet[1:][::2]) + t * np.array(planet[1:][1::2])
+    a, e, w, I, W, M = np.array(planet[1::2]) + t * np.array(planet[2::2])
     if planet[0] in jovians.index:                              # Jovian planets correction terms
         jovian = jovians.loc[planet[0]]
         b, c, s, f = jovian['b'], jovian['c'], jovian['s'], jovian['f'] # Radians
