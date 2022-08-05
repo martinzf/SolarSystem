@@ -30,13 +30,20 @@ def getdate():
     try:
         TT = dat.date.fromisoformat(input('Date yyyy-mm-dd: ')) # Terrestrial time, approx. JPL ephemeris time
     except ValueError:
-        print('Invalid date')
+        print('Invalid date format')
         exit()
     if TT > dat.date(3000,12,31):
         print('Date outside specified range')
         exit()
+    era = input('AD/BC: ')
     start = (dat.date.today() - J2000).days / 36525             # Centuries between today and J2000
-    end = (TT - J2000).days / 36525                             # Centuries between input final date and J2000
+    if era == 'AD':
+        end = (TT - J2000).days / 36525                         # Centuries between input final date and J2000
+    elif era == 'BC':
+        end = - ((TT - dat.date(1,1,1)) + (J2000 -dat.date(1, 1, 1))).days / 36525
+    else:
+        print('Must input "AD" or "BC"')
+        exit()
     return start, end
 
 def calcorbit(planet, t):
@@ -101,8 +108,13 @@ def animate(t):
         ln2.set_data(el[0, idx], el[1, idx])
         ln2.set_3d_properties(el[2, idx])
     ax.legend(bbox_to_anchor=(1.5, .8))
-    ax.set_title(f'Solar System, ECLIPJ2000 reference frame, {J2000 + dat.timedelta(days=t*36525)} (TT)',
-                 fontsize=20)
+    try:
+        date = J2000 + dat.timedelta(days=t * 36525)
+        era = 'AD'
+    except OverflowError:
+        date = dat.date(1, 1, 1) - dat.timedelta(days=t * 36525) - (J2000 - dat.date(1, 1, 1))
+        era = 'BC'
+    ax.set_title(f'Solar System, ECLIPJ2000 reference frame, {date} {era} (TT)', fontsize=20)
     return *lns1, *lns2
 
 def main():
