@@ -54,16 +54,18 @@ def calcorbit(elements, correction, t):
     a, e, w, i, O, M = elements[::2] + t * elements[1::2]
     b, c, s, f = correction                                     # Jovian planets' correction terms
     M += b * t ** 2 + c * np.cos(f * t) + s * np.sin(f * t)
-    M = M % (2 * np.pi)                                          # Modulus M between -π and π rad
+    M = M % (2 * np.pi)                                         # Modulus M between -π and π rad
     if M > np.pi:
         M -= 2 * np.pi
     elif M < -np.pi:
         M += 2 * np.pi
-    #K = lambda E: E - e * np.sin(E) - M                         # Kepler's equation = 0
-    #dKdE = lambda E: 1 - e * np.cos(E)                          # Derivative
-    #E = scp.optimize.newton(K, M, fprime=dKdE, tol=1.75e-8)
+    # Fixed point root finding for Kepler's equation
+    E = M - e * np.sin(M)
+    dE = (M - (E - e * np.sin(E))) / (1 - e * np.cos(E))
+    while dE > 1.75e-8:
+        E += dE
+        dE = (M - (E - e * np.sin(E))) / (1 - e * np.cos(E))
     # Coords. in heliocentric orbital plane (2D)
-    E = 1.
     x = np.array([[a * (np.cos(E) - e)],
                   [a * np.sqrt(1 - e ** 2) * np.sin(E)]])
     fullrot = np.linspace(0, 2 * np.pi, ellipsepoints)
