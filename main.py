@@ -47,23 +47,23 @@ def getdate():
         exit()
     return start, end
 
-def calcorbit(planet, t):
+@numba.njit()
+def calcorbit(elements, correction, t):
     # Propagation of Kepler orbital elements using Standish's linear fit
     # Units: centuries, astronomical units, radians
-    a, e, w, i, O, M = np.array(planet[1::2]) + t * np.array(planet[2::2])
-    if planet[0] in jovians.index:                              # Jovian planets correction terms
-        jovian = jovians.loc[planet[0]]
-        b, c, s, f = jovian['b'], jovian['c'], jovian['s'], jovian['f'] # Radians
-        M += b * t ** 2 + c * np.cos(f * t) + s * np.sin(f * t)
-    M = M % (2 * np.pi)                                         # Modulus M between -π and π rad
+    a, e, w, i, O, M = elements[::2] + t * elements[1::2]
+    b, c, s, f = correction                                     # Jovian planets' correction terms
+    M += b * t ** 2 + c * np.cos(f * t) + s * np.sin(f * t)
+    M = M % (2 * np.pi)                                          # Modulus M between -π and π rad
     if M > np.pi:
         M -= 2 * np.pi
     elif M < -np.pi:
         M += 2 * np.pi
-    K = lambda E: E - e * np.sin(E) - M                         # Kepler's equation = 0
-    dKdE = lambda E: 1 - e * np.cos(E)                          # Derivative
-    E = scp.optimize.newton(K, M, fprime=dKdE, tol=1.75e-8)
+    #K = lambda E: E - e * np.sin(E) - M                         # Kepler's equation = 0
+    #dKdE = lambda E: 1 - e * np.cos(E)                          # Derivative
+    #E = scp.optimize.newton(K, M, fprime=dKdE, tol=1.75e-8)
     # Coords. in heliocentric orbital plane (2D)
+    E = 1.
     x = np.array([[a * (np.cos(E) - e)],
                   [a * np.sqrt(1 - e ** 2) * np.sin(E)]])
     fullrot = np.linspace(0, 2 * np.pi, ellipsepoints)
@@ -96,8 +96,12 @@ def init():                                                     # Initialise fig
 def animate(t):
     x = np.array([[], [], []])
     el = np.array([[], [], []])
-    for planet in keplerel.itertuples():                        # Get coordinates for planets and orbits
-        xecl, ellipsecl = calcorbit(planet, t)
+    for planet in keplerel.index:                               # Get coordinates for planets and orbits
+        if planet in jovians.index:
+            correction = jovians.loc[planet].to_numpy()
+        else:
+            correction = np.zeros(4)
+        xecl, ellipsecl = calcorbit(keplerel.loc[planet].to_numpy(), correction, t)
         x = np.hstack((x, xecl))
         el = np.hstack((el,ellipsecl))
     for idx, ln1 in enumerate(lns1):                            # Plot planets
