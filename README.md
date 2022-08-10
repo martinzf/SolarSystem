@@ -10,8 +10,8 @@ The data was obtained from E.M. Standish (1992)
 https://www.rschr.de/PRPDF/aprx_pos_planets.pdf
 and adapted in order to simplify the code. Degrees were converted to
 radians. Certain quantites and their rates of change were combined into
-others in order to only track the planets' Kepler elements (e, a, I, Ω, ω, M):
+others in order to only track the planets' Keplerian orbital elements (e, a, ω, i, Ω, M):
 <li> Argument of perihelion = longitude of perihelion - longitude of 
-ascending node. </li>
+ascending node </li>
 <li> Mean anomaly = mean longitude - longitude of perihelion + (correction
-terms). </li>
+terms) </li>

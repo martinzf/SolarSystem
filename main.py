@@ -50,7 +50,7 @@ def getdate():
 def calcorbit(planet, t):
     # Propagation of Kepler orbital elements using Standish's linear fit
     # Units: centuries, astronomical units, radians
-    a, e, w, I, W, M = np.array(planet[1::2]) + t * np.array(planet[2::2])
+    a, e, w, i, O, M = np.array(planet[1::2]) + t * np.array(planet[2::2])
     if planet[0] in jovians.index:                              # Jovian planets correction terms
         jovian = jovians.loc[planet[0]]
         b, c, s, f = jovian['b'], jovian['c'], jovian['s'], jovian['f'] # Radians
@@ -69,13 +69,13 @@ def calcorbit(planet, t):
     fullrot = np.linspace(0, 2 * np.pi, ellipsepoints)
     ellipse = np.vstack((a * (np.cos(fullrot) - e),
                          a * np.sqrt(1 - e ** 2) * np.sin(fullrot)))
-    # Coords. in J2000 ecliptic plane (3D), rotation matrix (Rz(W) * Rx(I) * Rz(w) * v)
+    # Coords. in J2000 ecliptic plane (3D), rotation matrix (Rz(O) * Rx(i) * Rz(w) * v)
     cw, sw = np.cos(w), np.sin(w)
-    cI, sI = np.cos(I), np.sin(I)
-    cW, sW = np.cos(W), np.sin(W)
-    rot = np.array([[cw * cW - sw * sW * cI, -sw * cW - cw * sW * cI],
-                    [cw * sW + sw * cW * cI, -sw * sW + cw * cW * cI],
-                    [sw * sI, cw * sI]])
+    ci, si = np.cos(i), np.sin(i)
+    cO, sO = np.cos(O), np.sin(O)
+    rot = np.array([[cw * cO - sw * sO * ci, -sw * cO - cw * sO * ci],
+                    [cw * sO + sw * cO * ci, -sw * sO + cw * cO * ci],
+                    [sw * si, cw * si]])
     xecl = rot @ x
     ellipsecl = rot @ ellipse
     return xecl, ellipsecl
