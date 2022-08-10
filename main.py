@@ -11,13 +11,13 @@ plt.style.use(['science', 'notebook', 'grid'])
 # E.M. Standish (1992)'s data for simplified orbit propagation
 keplerel = pd.read_csv('keplerel.csv', index_col=0)             # Planets' Kepler elements
 jovians = pd.read_csv('jovians.csv', index_col=0)               # Jovian planets' correction terms
-J2000 = dat.date(2000,1,1)                                      # Reference epoch (1st July 2000, 12:00 GMT)
+J2000 = dat.date(2000, 1, 1)                                    # Reference epoch (1st July 2000, 12:00 GMT)
 ellipsepoints = 50                                              # Orbit line resolution
 anidpi = 100
 anifps = 50
 aniframes = 150
-fig, ax = plt.subplots(figsize=(20.5,10), subplot_kw={'projection':'3d'})
-axlims = keplerel.iloc[-1, 0]
+fig, ax = plt.subplots(figsize=(20.5, 10), subplot_kw={'projection':'3d'})
+axlims = keplerel['a'].max()
 lns1 = []
 lns2 = []
 for planet in keplerel.index:
@@ -33,7 +33,7 @@ def getdate():
     except ValueError:
         print('Invalid date format')
         exit()
-    if TT > dat.date(3000,12,31):
+    if TT > dat.date(3000, 12, 31):
         print('Date outside specified range')
         exit()
     era = input('AD/BC: ')
@@ -41,7 +41,7 @@ def getdate():
     if era == 'AD':
         end = (TT - J2000).days / 36525                         # Centuries between input final date and J2000
     elif era == 'BC':
-        end = - ((TT - dat.date(1,1,1)) + (J2000 -dat.date(1, 1, 1))).days / 36525
+        end = - ((TT - dat.date(1, 1, 1)) + (J2000 -dat.date(1, 1, 1))).days / 36525
     else:
         print('Must input "AD" or "BC"')
         exit()
