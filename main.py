@@ -47,7 +47,7 @@ def getdate():
         exit()
     return start, end
 
-@numba.njit('(f8[:], f8[:], f8)', fastmath=True, parallel=True)
+@numba.njit((numba.float64[:], numba.float64[:], numba.float64), fastmath=True, parallel=True)
 def calcorbit(elements, correction, t):
     # Propagation of Kepler orbital elements using Standish's linear fit
     # Units: centuries, astronomical units, radians
@@ -59,7 +59,7 @@ def calcorbit(elements, correction, t):
         M -= 2 * np.pi
     elif M < -np.pi:
         M += 2 * np.pi
-    # Newton's root finding method for Kepler's equation
+    # Newton's method, to find roots of Kepler's equation
     E = M - e * np.sin(M)
     dE = (M - (E - e * np.sin(E))) / (1 - e * np.cos(E))
     while dE > tol:
