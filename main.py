@@ -1,5 +1,4 @@
 import numpy as np
-import scipy as scp
 import pandas as pd
 import datetime as dat
 import os
@@ -13,7 +12,7 @@ keplerel = pd.read_csv('keplerel.csv', index_col=0)             # Planets' Keple
 jovians = pd.read_csv('jovians.csv', index_col=0)               # Jovian planets' correction terms
 J2000 = dat.date(2000, 1, 1)                                    # Reference epoch (1st July 2000, 12:00 GMT)
 tol = 1.75e-8                                                   # Tolerance for Kepler equation solution (radians)
-ellipsepoints = 50                                              # Orbit line resolution
+ellipsepoints = 50                                              # Orbit line resolution (point count)
 anidpi = 100
 anifps = 50
 aniframes = 150
@@ -99,12 +98,13 @@ def init():                                                     # Initialise fig
 def animate(t):
     x = np.array([[], [], []])
     el = np.array([[], [], []])
-    for planet in keplerel.index:                               # Get coordinates for planets and orbits
-        if planet in jovians.index:
-            correction = jovians.loc[planet].to_numpy()
+    for idx, planet in enumerate(keplerel.to_numpy()):          # Get coordinates for planets and orbits
+        name = keplerel.index[idx]
+        if name in jovians.index:
+            correction = jovians.loc[name].to_numpy()
         else:
             correction = np.zeros(4)
-        xecl, ellipsecl = calcorbit(keplerel.loc[planet].to_numpy(), correction, t)
+        xecl, ellipsecl = calcorbit(planet, correction, t)
         x = np.hstack((x, xecl))
         el = np.hstack((el,ellipsecl))
     for idx, ln1 in enumerate(lns1):                            # Plot planets
