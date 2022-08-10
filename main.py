@@ -12,6 +12,7 @@ plt.style.use(['science', 'notebook', 'grid'])
 keplerel = pd.read_csv('keplerel.csv', index_col=0)             # Planets' Kepler elements
 jovians = pd.read_csv('jovians.csv', index_col=0)               # Jovian planets' correction terms
 J2000 = dat.date(2000, 1, 1)                                    # Reference epoch (1st July 2000, 12:00 GMT)
+tol = 1.75e-8                                                   # Tolerance for Kepler equation solution (radians)
 ellipsepoints = 50                                              # Orbit line resolution
 anidpi = 100
 anifps = 50
@@ -59,10 +60,10 @@ def calcorbit(elements, correction, t):
         M -= 2 * np.pi
     elif M < -np.pi:
         M += 2 * np.pi
-    # Fixed point root finding for Kepler's equation
+    # Newton's root finding method for Kepler's equation
     E = M - e * np.sin(M)
     dE = (M - (E - e * np.sin(E))) / (1 - e * np.cos(E))
-    while dE > 1.75e-8:
+    while dE > tol:
         E += dE
         dE = (M - (E - e * np.sin(E))) / (1 - e * np.cos(E))
     # Coords. in heliocentric orbital plane (2D)
