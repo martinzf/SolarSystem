@@ -98,23 +98,24 @@ def init():                                                     # Initialise fig
 def animate(t):
     x = np.array([[], [], []])
     el = np.array([[], [], []])
-    for idx, planet in enumerate(keplerel.to_numpy()):          # Get coordinates for planets and orbits
-        name = keplerel.index[idx]
-        if name in jovians.index:
-            correction = jovians.loc[name].to_numpy()
+    for idx, elements in enumerate(keplerel.to_numpy()):
+        # Get coordinates for planets and orbits
+        planet = keplerel.index[idx]
+        if planet in jovians.index:
+            correction = jovians.loc[planet].to_numpy()
         else:
             correction = np.zeros(4)
-        xecl, ellipsecl = calcorbit(planet, correction, t)
+        xecl, ellipsecl = calcorbit(elements, correction, t)
         x = np.hstack((x, xecl))
         el = np.hstack((el,ellipsecl))
-    for idx, ln1 in enumerate(lns1):                            # Plot planets
-        ln1.set_data([x[0, idx]], [x[1, idx]])
-        ln1.set_3d_properties([x[2, idx]])
-        ln1.set_label(keplerel.index[idx])
-    for n, ln2 in enumerate(lns2):                              # Plot orbits
-        idx = np.arange(ellipsepoints * n, ellipsepoints * (n + 1))
-        ln2.set_data(el[0, idx], el[1, idx])
-        ln2.set_3d_properties(el[2, idx])
+        # Plot planets
+        lns1[idx].set_data([x[0, idx]], [x[1, idx]])
+        lns1[idx].set_3d_properties([x[2, idx]])
+        lns1[idx].set_label(keplerel.index[idx])
+        # Plot orbits
+        n = np.arange(ellipsepoints * idx, ellipsepoints * (idx + 1))
+        lns2[idx].set_data(el[0, n], el[1, n])
+        lns2[idx].set_3d_properties(el[2, n])
     ax.legend(bbox_to_anchor=(1.5, .8))
     try:                                                        # Display date
         date = J2000 + dat.timedelta(days=t * 36525)
