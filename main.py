@@ -107,11 +107,11 @@ def animate(t):
             correction = np.zeros(4)
         xecl, ellipsecl = calcorbit(elements, correction, t)
         x = np.hstack((x, xecl))
-        el = np.hstack((el,ellipsecl))
+        el = np.hstack((el, ellipsecl))
         # Plot planets
         lns1[idx].set_data([x[0, idx]], [x[1, idx]])
         lns1[idx].set_3d_properties([x[2, idx]])
-        lns1[idx].set_label(keplerel.index[idx])
+        lns1[idx].set_label(planet)
         # Plot orbits
         n = np.arange(ellipsepoints * idx, ellipsepoints * (idx + 1))
         lns2[idx].set_data(el[0, n], el[1, n])
