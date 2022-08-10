@@ -49,13 +49,13 @@ def getdate():
 
 def calcorbit(planet, t):
     # Propagation of Kepler orbital elements using Standish's linear fit
-    # Centuries, astronomical units, radians
+    # Units: centuries, astronomical units, radians
     a, e, w, I, W, M = np.array(planet[1::2]) + t * np.array(planet[2::2])
     if planet[0] in jovians.index:                              # Jovian planets correction terms
         jovian = jovians.loc[planet[0]]
         b, c, s, f = jovian['b'], jovian['c'], jovian['s'], jovian['f'] # Radians
         M += b * t ** 2 + c * np.cos(f * t) + s * np.sin(f * t)
-    M = M % (2 * np.pi)                                         # Modulo M between -180º and 180º
+    M = M % (2 * np.pi)                                         # Modulus M between -π and π rad
     if M > np.pi:
         M -= 2 * np.pi
     elif M < -np.pi:
@@ -63,13 +63,13 @@ def calcorbit(planet, t):
     K = lambda E: E - e * np.sin(E) - M                         # Kepler's equation = 0
     dKdE = lambda E: 1 - e * np.cos(E)                          # Derivative
     E = scp.optimize.newton(K, M, fprime=dKdE, tol=1.75e-8)
-    # Coords. in heliocentric orbital plane
+    # Coords. in heliocentric orbital plane (2D)
     x = np.array([[a * (np.cos(E) - e)],
                   [a * np.sqrt(1 - e ** 2) * np.sin(E)]])
     fullrot = np.linspace(0, 2 * np.pi, ellipsepoints)
     ellipse = np.vstack((a * (np.cos(fullrot) - e),
                          a * np.sqrt(1 - e ** 2) * np.sin(fullrot)))
-    # Coords. in J2000 ecliptic plane, rotation matrix (anticlock z (w), anticlock x (I), anticlock z (W))
+    # Coords. in J2000 ecliptic plane (3D), rotation matrix (Rz(W) * Rx(I) * Rz(w) * v)
     cw, sw = np.cos(w), np.sin(w)
     cI, sI = np.cos(I), np.sin(I)
     cW, sW = np.cos(W), np.sin(W)
@@ -80,7 +80,7 @@ def calcorbit(planet, t):
     ellipsecl = rot @ ellipse
     return xecl, ellipsecl
 
-def init():
+def init():                                                     # Initialise figure
     ax.set_xlim3d(-axlims, axlims)
     ax.set_ylim3d(-axlims, axlims)
     ax.set_zlim3d(-axlims, axlims)
@@ -96,20 +96,20 @@ def init():
 def animate(t):
     x = np.array([[], [], []])
     el = np.array([[], [], []])
-    for planet in keplerel.itertuples():
+    for planet in keplerel.itertuples():                        # Get coordinates for planets and orbits
         xecl, ellipsecl = calcorbit(planet, t)
         x = np.hstack((x, xecl))
         el = np.hstack((el,ellipsecl))
-    for idx, ln1 in enumerate(lns1):
+    for idx, ln1 in enumerate(lns1):                            # Plot planets
         ln1.set_data([x[0, idx]], [x[1, idx]])
         ln1.set_3d_properties([x[2, idx]])
         ln1.set_label(keplerel.index[idx])
-    for n, ln2 in enumerate(lns2):
+    for n, ln2 in enumerate(lns2):                              # Plot orbits
         idx = np.arange(ellipsepoints * n, ellipsepoints * (n + 1))
         ln2.set_data(el[0, idx], el[1, idx])
         ln2.set_3d_properties(el[2, idx])
     ax.legend(bbox_to_anchor=(1.5, .8))
-    try:
+    try:                                                        # Display date
         date = J2000 + dat.timedelta(days=t * 36525)
         era = 'AD'
     except OverflowError:
@@ -120,9 +120,9 @@ def animate(t):
 
 def main():
     start, end = getdate()
-    frames = np.concatenate((start * np.ones(int(anifps / 2)),  # Linger on starting image
+    frames = np.concatenate((start * np.ones(int(anifps / 2)),  # Linger on starting frame
                              np.linspace(start, end, aniframes - anifps),
-                             end * np.ones(int(anifps / 2))))   # Linger on final image
+                             end * np.ones(int(anifps / 2))))   # Linger on final frame
     ani = FuncAnimation(fig, animate, frames=frames, init_func=init, interval=50, blit=True)
     ani.save('solar_system.gif', writer='pillow', fps=anifps, dpi=anidpi)
     os.system('"solar_system.gif"')
