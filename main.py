@@ -23,18 +23,21 @@ lns2 = [ax.plot([], [], [], 'k', lw=1)[0] for planet in keplerel.index]
 
 def getdate():
     print('Input a date between 3000 BC and 3000 AD')
+    # Get terrestrial time (TT), approx. JPL ephemeris time
     try:
-        TT = dat.date.fromisoformat(input('Date yyyy-mm-dd: ')) # Terrestrial time, approx. JPL ephemeris time
+        TT = dat.date.fromisoformat(input('Date yyyy-mm-dd: '))
     except ValueError:
         print('Invalid date format')
         exit()
     if TT > dat.date(3000, 12, 31):
         print('Date outside specified range')
         exit()
+    # Centuries between today and J2000
+    start = (dat.date.today() - J2000).days / 36525
+    # Centuries between input final date and J2000
     era = input('AD/BC: ')
-    start = (dat.date.today() - J2000).days / 36525             # Centuries between today and J2000
     if era == 'AD':
-        end = (TT - J2000).days / 36525                         # Centuries between input final date and J2000
+        end = (TT - J2000).days / 36525
     elif era == 'BC':
         end = - ((TT - dat.date(1, 1, 1)) + (J2000 -dat.date(1, 1, 1))).days / 36525
     else:
@@ -47,9 +50,10 @@ def calcorbit(elements, correction, t):
     # Propagation of Kepler orbital elements using Standish's linear fit
     # Units: centuries, astronomical units, radians
     a, e, w, i, O, M = elements[::2] + t * elements[1::2]
-    b, c, s, f = correction                                     # Jovian planets' correction terms
+    b, c, s, f = correction
     M += b * t ** 2 + c * np.cos(f * t) + s * np.sin(f * t)
-    M = M % (2 * np.pi)                                         # Modulus M between -π and π rad
+    # Modulus M between -π and π rad
+    M = M % (2 * np.pi)
     if M > np.pi:
         M -= 2 * np.pi
     elif M < -np.pi:
@@ -77,7 +81,8 @@ def calcorbit(elements, correction, t):
     ellipsecl = rot @ ellipse
     return xecl, ellipsecl
 
-def init():                                                     # Initialise figure
+def init():
+    # Initialise figure
     ax.set_xlim3d(-axlims, axlims)
     ax.set_ylim3d(-axlims, axlims)
     ax.set_zlim3d(-axlims, axlims)
@@ -102,7 +107,8 @@ def animate(t):
         # Plot orbits
         lns2[idx].set_data(ellipsecl[0], ellipsecl[1])
         lns2[idx].set_3d_properties(ellipsecl[2])
-    try:                                                        # Display date
+    # Display date
+    try:
         date = J2000 + dat.timedelta(days=t * 36525)
         era = 'AD'
     except OverflowError:
