@@ -98,15 +98,12 @@ def animate(t):
         else:
             correction = np.zeros(4)
         xecl, ellipsecl = calcorbit(elements, correction, t)
-        x = np.hstack((x, xecl))
-        el = np.hstack((el, ellipsecl))
         # Plot planets
-        lns1[idx].set_data([x[0, idx]], [x[1, idx]])
-        lns1[idx].set_3d_properties([x[2, idx]])
+        lns1[idx].set_data(xecl[0], xecl[1])
+        lns1[idx].set_3d_properties(xecl[2])
         # Plot orbits
-        n = np.arange(ellipsepoints * idx, ellipsepoints * (idx + 1))
-        lns2[idx].set_data(el[0, n], el[1, n])
-        lns2[idx].set_3d_properties(el[2, n])
+        lns2[idx].set_data(ellipsecl[0], ellipsecl[1])
+        lns2[idx].set_3d_properties(ellipsecl[2])
     try:                                                        # Display date
         date = J2000 + dat.timedelta(days=t * 36525)
         era = 'AD'
