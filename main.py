@@ -18,13 +18,8 @@ anifps = 50
 aniframes = 150
 fig, ax = plt.subplots(figsize=(20.5, 10), subplot_kw={'projection':'3d'})
 axlims = keplerel['a'].max()
-lns1 = []
-lns2 = []
-for planet in keplerel.index:
-    lobj, = ax.plot([], [], [], 'o', label=planet)
-    lns1.append(lobj)
-    lobj, = ax.plot([], [], [], 'k', lw=1)
-    lns2.append(lobj)
+lns1 = [ax.plot([], [], [], 'o', label=planet)[0] for planet in keplerel.index]
+lns2 = [ax.plot([], [], [], 'k', lw=1)[0] for planet in keplerel.index]
 
 def getdate():
     print('Input a date between 3000 BC and 3000 AD')
