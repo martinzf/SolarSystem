@@ -88,8 +88,6 @@ def init():                                                     # Initialise fig
     return *lns1, *lns2
 
 def animate(t):
-    x = np.array([[], [], []])
-    el = np.array([[], [], []])
     for idx, elements in enumerate(keplerel.to_numpy()):
         # Get coordinates for planets and orbits
         planet = keplerel.index[idx]
