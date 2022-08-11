@@ -47,7 +47,7 @@ def getdate():
         exit()
     return start, end
 
-@numba.njit((numba.float64[:], numba.float64[:], numba.float64), fastmath=True, parallel=True)
+@numba.njit('Tuple((f8[:,:],f8[:,:]))(f8[:], f8[:], f8)', fastmath=True, parallel=True)
 def calcorbit(elements, correction, t):
     # Propagation of Kepler orbital elements using Standish's linear fit
     # Units: centuries, astronomical units, radians
@@ -89,10 +89,7 @@ def init():                                                     # Initialise fig
     ax.set_xlabel(r'$\hat{X}$: Vernal Equinox (AU)', labelpad=10)
     ax.set_ylabel(r'$\hat{Y}=\hat{Z}\times\hat{X}$ (AU)', labelpad=10)
     ax.set_zlabel(r'$\hat{Z}$: North Ecliptic Pole (AU)', labelpad=10)
-    for ln1 in lns1:
-        ln1.set_data([], [])
-    for ln2 in lns2:
-        ln2.set_data([], [])
+    ax.legend(bbox_to_anchor=(1.5, .8))
     return *lns1, *lns2
 
 def animate(t):
@@ -111,12 +108,10 @@ def animate(t):
         # Plot planets
         lns1[idx].set_data([x[0, idx]], [x[1, idx]])
         lns1[idx].set_3d_properties([x[2, idx]])
-        lns1[idx].set_label(planet)
         # Plot orbits
         n = np.arange(ellipsepoints * idx, ellipsepoints * (idx + 1))
         lns2[idx].set_data(el[0, n], el[1, n])
         lns2[idx].set_3d_properties(el[2, n])
-    ax.legend(bbox_to_anchor=(1.5, .8))
     try:                                                        # Display date
         date = J2000 + dat.timedelta(days=t * 36525)
         era = 'AD'
