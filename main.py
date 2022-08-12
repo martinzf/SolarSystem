@@ -45,7 +45,7 @@ def getdate():
         exit()
     return start, end
 
-@numba.njit('Tuple((f8[:,:],f8[:,:]))(f8[:], f8[:], f8)', fastmath=True, parallel=True)
+@numba.njit('Tuple((f8[:,:],f8[:,:]))(f8[:], f8[:], f8)', fastmath=True, parallel=True, cache=True)
 def calcorbit(elements, correction, t):
     # Propagation of Kepler orbital elements using Standish's linear fit
     # Units: centuries, astronomical units, radians
