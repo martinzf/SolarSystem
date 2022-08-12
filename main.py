@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import datetime as dat
 import os
-import numba
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 plt.style.use(['science', 'notebook', 'grid'])
@@ -45,7 +44,6 @@ def getdate():
         exit()
     return start, end
 
-@numba.njit('Tuple((f8[:,:],f8[:,:]))(f8[:], f8[:], f8)', fastmath=True, parallel=True, cache=True)
 def calcorbit(elements, correction, t):
     # Propagation of Kepler orbital elements using Standish's linear fit
     # Units: centuries, astronomical units, radians
