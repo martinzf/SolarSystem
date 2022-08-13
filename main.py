@@ -56,12 +56,12 @@ def calcorbit(elements, correction, t):
         M -= 2 * np.pi
     elif M < -np.pi:
         M += 2 * np.pi
-    # Newton's method, to find roots of Kepler's equation
-    E = M - e * np.sin(M)
-    dE = (M - (E - e * np.sin(E))) / (1 - e * np.cos(E))
-    while dE > tol:
-        E += dE
-        dE = (M - (E - e * np.sin(E))) / (1 - e * np.cos(E))
+    # Newton's method to find roots of Kepler's equation
+    E = M
+    f = M - (E - e * np.sin(E))
+    while np.abs(f) > tol:
+        E += f / (1 - e * np.cos(E))
+        f = M - (E - e * np.sin(E))
     # Coords. in heliocentric orbital plane (2D)
     x = np.array([[a * (np.cos(E) - e)],
                   [a * np.sqrt(1 - e ** 2) * np.sin(E)]])
