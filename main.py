@@ -15,10 +15,12 @@ ellipsepoints = 50                                              # Orbit line res
 anidpi = 100
 anifps = 50
 aniframes = 150
-fig, ax = plt.subplots(figsize=(20.5, 10), subplot_kw={'projection':'3d'})
+fig, ax = plt.subplots(figsize=(13, 10), subplot_kw={'projection':'3d'})
 axlims = keplerel['a'].max()
-lns1 = [ax.plot([], [], [], 'o', label=planet)[0] for planet in keplerel.index]
+colours = ['darkgrey', 'darkorange', 'g', 'r', 'darksalmon', 'gold', 'lightblue', 'b']
+lns1 = [ax.plot([], [], [], 'o', label=planet, color=colours[idx])[0] for idx, planet in enumerate(keplerel.index)]
 lns2 = [ax.plot([], [], [], 'k', lw=1)[0] for planet in keplerel.index]
+time_text = fig.text(.612, .889, '', fontsize=20)
 
 def getdate():
     print('Input a date between 3000 BC and 3000 AD')
@@ -87,6 +89,8 @@ def init():
     ax.set_xlabel(r'$\hat{X}$: Vernal Equinox (AU)', labelpad=10)
     ax.set_ylabel(r'$\hat{Y}=\hat{Z}\times\hat{X}$ (AU)', labelpad=10)
     ax.set_zlabel(r'$\hat{Z}$: North Ecliptic Pole (AU)', labelpad=10)
+    ax.set_title('Solar System, ECLIPJ2000 reference frame,', fontsize=20)
+    plt.subplots_adjust(left=-0.15)
     ax.legend(bbox_to_anchor=(1.5, .8))
     return *lns1, *lns2
 
@@ -112,7 +116,7 @@ def animate(t):
     except OverflowError:
         date = dat.date(1, 1, 1) - dat.timedelta(days=t * 36525) - (J2000 - dat.date(1, 1, 1))
         era = 'BC'
-    ax.set_title(f'Solar System, ECLIPJ2000 reference frame, {date} {era} (TT)', fontsize=20)
+    time_text.set_text(f'{date} {era} (TT)')
     return *lns1, *lns2
 
 def main():
