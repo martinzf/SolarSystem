@@ -25,7 +25,7 @@ and opened.
 The data was obtained from 
 [E.M. Standish (1992)](https://www.rschr.de/PRPDF/aprx_pos_planets.pdf)
 and adapted in order to simplify the code. Degrees were converted to
-radians. Certain quantites and their rates of change were combined into
+radians. Certain quantities and their rates of change were combined into
 others in order to only track the planets' classical Keplerian orbital 
 elements (e, a, ω, i, Ω, M):
 - Argument of perihelion = longitude of perihelion - longitude of 
