@@ -4,7 +4,7 @@ import datetime as dat
 import os
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-plt.style.use(['science', 'notebook', 'grid'])
+plt.style.use(['dark_background'])
 
 # E.M. Standish (1992)'s data for simplified orbit propagation
 keplerel = pd.read_csv('keplerel.csv', index_col=0)             # Planets' Kepler elements
@@ -25,25 +25,31 @@ time_text = fig.text(.612, .889, '', fontsize=20)
 def getdate():
     print('Input a date between 3000 BC and 3000 AD')
     # Get terrestrial time (TT), approx. JPL ephemeris time
-    try:
-        TT = dat.date.fromisoformat(input('Date yyyy-mm-dd: '))
-    except ValueError:
-        print('Invalid date format')
-        exit()
-    if TT > dat.date(3000, 12, 31):
-        print('Date outside specified range')
-        exit()
+    while True:
+        try:
+            TT = dat.date.fromisoformat(input('Date yyyy-mm-dd: '))
+            if TT > dat.date(3000, 12, 31):
+                print('Date outside specified range')
+                pass
+            else:
+                break
+        except ValueError:
+            print('Invalid date format')
+            pass
     # Centuries between today and J2000
     start = (dat.date.today() - J2000).days / 36525
     # Centuries between input final date and J2000
-    era = input('AD/BC: ')
+    while True:
+        era = input('AD/BC: ')
+        if era == 'AD' or era == 'BC':
+            break
+        else:
+            print('Must input "AD" or "BC"')
+            pass
     if era == 'AD':
         end = (TT - J2000).days / 36525
     elif era == 'BC':
         end = - ((TT - dat.date(1, 1, 1)) + (J2000 -dat.date(1, 1, 1))).days / 36525
-    else:
-        print('Must input "AD" or "BC"')
-        exit()
     return start, end
 
 def calcorbit(elements, correction, t):
@@ -86,9 +92,9 @@ def init():
     ax.set_xlim3d(-axlims, axlims)
     ax.set_ylim3d(-axlims, axlims)
     ax.set_zlim3d(-axlims, axlims)
-    ax.set_xlabel(r'$\hat{X}$: Vernal Equinox (AU)', labelpad=10)
-    ax.set_ylabel(r'$\hat{Y}=\hat{Z}\times\hat{X}$ (AU)', labelpad=10)
-    ax.set_zlabel(r'$\hat{Z}$: North Ecliptic Pole (AU)', labelpad=10)
+    ax.set_xlabel(r'$\hat{X}$: Vernal Equinox (AU)', labelpad=10, fontsize=15)
+    ax.set_ylabel(r'$\hat{Y}=\hat{Z}\times\hat{X}$ (AU)', labelpad=10, fontsize=15)
+    ax.set_zlabel(r'$\hat{Z}$: North Ecliptic Pole (AU)', labelpad=10, fontsize=15)
     ax.set_title('Solar System, ECLIPJ2000 reference frame,', fontsize=20)
     plt.subplots_adjust(left=-0.15)
     ax.legend(bbox_to_anchor=(1.5, .8))
