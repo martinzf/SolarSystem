@@ -97,7 +97,7 @@ def init():
     ax.set_zlabel(r'$\hat{Z}$: North Ecliptic Pole (AU)', labelpad=10, fontsize=15)
     ax.set_title('Solar System, ECLIPJ2000 reference frame,', fontsize=20)
     plt.subplots_adjust(left=-0.15)
-    ax.legend(bbox_to_anchor=(1.5, .8))
+    ax.legend(bbox_to_anchor=(1.5, .8), fontsize=15)
     return *lns1, *lns2
 
 def animate(t):
