@@ -40,15 +40,15 @@ def getdate():
     start = (dat.date.today() - J2000).days / 36525
     # Centuries between input final date and J2000
     while True:
-        era = input('AD/BC: ')
-        if era == 'AD' or era == 'BC':
+        era = input('AD/BC: ').lower()
+        if era == 'ad' or era == 'bc':
             break
         else:
             print('Must input "AD" or "BC"')
             pass
-    if era == 'AD':
+    if era == 'ad':
         end = (TT - J2000).days / 36525
-    elif era == 'BC':
+    else:
         end = - ((TT - dat.date(1, 1, 1)) + (J2000 -dat.date(1, 1, 1))).days / 36525
     return start, end
 
