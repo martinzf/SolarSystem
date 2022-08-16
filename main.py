@@ -9,6 +9,7 @@ plt.style.use(['dark_background'])
 # E.M. Standish (1992)'s data for simplified orbit propagation
 keplerel = pd.read_csv('keplerel.csv', index_col=0)             # Planets' Kepler elements
 jovians = pd.read_csv('jovians.csv', index_col=0)               # Jovian planets' correction terms
+
 J2000 = dat.date(2000, 1, 1)                                    # Reference epoch (1st July 2000, 12:00 GMT)
 tol = 1.75e-8                                                   # Tolerance for Kepler equation solution (radians)
 ellipsepoints = 50                                              # Orbit line resolution (point count)
@@ -30,12 +31,10 @@ def getdate():
             TT = dat.date.fromisoformat(input('Date yyyy-mm-dd: '))
             if TT > dat.date(3000, 12, 31):
                 print('Date outside specified range')
-                pass
             else:
                 break
         except ValueError:
             print('Invalid date format')
-            pass
     # Centuries between today and J2000
     start = (dat.date.today() - J2000).days / 36525
     # Centuries between input final date and J2000
@@ -45,7 +44,6 @@ def getdate():
             break
         else:
             print('Must input "AD" or "BC"')
-            pass
     if era == 'ad':
         end = (TT - J2000).days / 36525
     else:
