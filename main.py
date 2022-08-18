@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import datetime as dat
-import os
+import webbrowser
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 plt.style.use(['dark_background'])
@@ -130,7 +130,7 @@ def main():
                              end * np.ones(int(anifps / 2))))   # Linger on final frame
     ani = FuncAnimation(fig, animate, frames=frames, init_func=init, interval=50, blit=True)
     ani.save('solar_system.gif', writer='pillow', fps=anifps, dpi=anidpi)
-    os.system('"solar_system.gif"')
+    webbrowser.open('solar_system.gif')
 
 if __name__=="__main__":
     main()
