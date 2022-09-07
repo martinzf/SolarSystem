@@ -6,7 +6,7 @@ It animates the Solar System's planets from their current position to
 one at a user specified date between 3000 BC and 3000 AD.
 
 ### How to run
-1. Either fork or download the project and open the folder in the 
+1. Clone the project and open the folder in the 
 command line.
 2. Install dependencies using the `pip install -r requirements.txt` command.
 3. Run the script with `python main.py`, or `python3 main.py` if both Python 2
