@@ -7,8 +7,18 @@ from matplotlib.animation import FuncAnimation
 plt.style.use(['dark_background'])
 
 # E.M. Standish (1992)'s data for simplified orbit propagation
-keplerel = pd.read_csv('keplerel.csv', index_col=0)             # Planets' Kepler elements
-jovians = pd.read_csv('jovians.csv', index_col=0)               # Jovian planets' correction terms
+keplerel = pd.read_csv('keplerel.csv', index_col=0)            # Planets' Kepler elements
+jovians = pd.read_csv('jovians.csv', index_col=0)              # Jovian planets' correction terms
+
+# Change degrees to radians
+keplerel.loc[:, 'I':'d/dt(long.peri.)'] = np.pi / 180 * keplerel.loc[:, 'I':'d/dt(long.peri.)']
+jovians = np.pi / 180 * jovians
+
+# Classical Kepler orbital elements
+keplerel['w'] = keplerel['long.peri.'] - keplerel['long.node.'] # Argument of perihelion
+keplerel['dw/dt'] = keplerel['d/dt(long.peri.)'] - keplerel['d/dt(long.node.)']
+keplerel['M'] = keplerel['L'] - keplerel['long.peri.']          # Mean anomaly
+keplerel['dM/dt'] = keplerel['dL/dt'] - keplerel['d/dt(long.peri.)']
 
 J2000 = dat.date(2000, 1, 1)                                    # Reference epoch (1st July 2000, 12:00 GMT)
 tol = 1.75e-8                                                   # Tolerance for Kepler equation solution (radians)
@@ -50,17 +60,17 @@ def getdate():
         end = - ((TT - dat.date(1, 1, 1)) + (J2000 -dat.date(1, 1, 1))).days / 36525
     return start, end
 
-def calcorbit(elements, correction, t):
+def calcorbit(angles, correction, t):
     # Propagation of Kepler orbital elements using Standish's linear fit
     # Units: centuries, astronomical units, radians
-    a, e, w, i, O, M = elements[::2] + t * elements[1::2]
+    a, e, w, I, O, M = angles
     b, c, s, f = correction
     M += b * t ** 2 + c * np.cos(f * t) + s * np.sin(f * t)
     # Modulus M between -π and π rad
     M = M % (2 * np.pi)
     if M > np.pi:
         M -= 2 * np.pi
-    elif M < -np.pi:
+    if M < -np.pi:
         M += 2 * np.pi
     # Newton's method to find roots of Kepler's equation
     E = M
@@ -74,12 +84,12 @@ def calcorbit(elements, correction, t):
     fullrot = np.linspace(0, 2 * np.pi, ellipsepoints)
     ellipse = np.vstack((a * (np.cos(fullrot) - e),
                          a * np.sqrt(1 - e ** 2) * np.sin(fullrot)))
-    # Coords. in J2000 ecliptic plane (3D), rotation matrix (Rz(O) * Rx(i) * Rz(w) * v)
+    # Coords. in J2000 ecliptic plane (3D), rotation matrix (Rz(O) * Rx(i) * Rz(w))
     cw, sw = np.cos(w), np.sin(w)
-    ci, si = np.cos(i), np.sin(i)
-    cO, sO = np.cos(O), np.sin(O)
-    rot = np.array([[cw * cO - sw * sO * ci, -sw * cO - cw * sO * ci],
-                    [cw * sO + sw * cO * ci, -sw * sO + cw * cO * ci],
+    ci, si = np.cos(I), np.sin(I)
+    co, so = np.cos(O), np.sin(O)
+    rot = np.array([[cw * co - sw * so * ci, -sw * co - cw * so * ci],
+                    [cw * so + sw * co * ci, -sw * so + cw * co * ci],
                     [sw * si, cw * si]])
     xecl = rot @ x
     ellipsecl = rot @ ellipse
@@ -99,14 +109,17 @@ def init():
     return *lns1, *lns2
 
 def animate(t):
-    for idx, elements in enumerate(keplerel.to_numpy()):
+    for planet_name, planet in keplerel.iterrows():
         # Get coordinates for planets and orbits
-        planet = keplerel.index[idx]
-        if planet in jovians.index:
-            correction = jovians.loc[planet].to_numpy()
+        idx = list(keplerel.index).index(planet_name)
+        if planet_name in jovians.index:
+            correction = jovians.loc[planet_name].to_numpy()
         else:
             correction = np.zeros(4)
-        xecl, ellipsecl = calcorbit(elements, correction, t)
+        elements = planet[['a', 'e', 'w', 'I', 'long.node.', 'M']].to_numpy()
+        variation = planet[['da/dt', 'de/dt', 'dw/dt', 'dI/dt', 'd/dt(long.node.)', 'dM/dt']].to_numpy()
+        angles = elements + t * variation
+        xecl, ellipsecl = calcorbit(angles, correction, t)
         # Plot planets
         lns1[idx].set_data(xecl[0], xecl[1])
         lns1[idx].set_3d_properties(xecl[2])
@@ -115,10 +128,10 @@ def animate(t):
         lns2[idx].set_3d_properties(ellipsecl[2])
     # Display date
     try:
-        date = J2000 + dat.timedelta(days=t * 36525)
+        date = J2000 + dat.timedelta(days=t*36525)
         era = 'AD'
     except OverflowError:
-        date = dat.date(1, 1, 1) - dat.timedelta(days=t * 36525) - (J2000 - dat.date(1, 1, 1))
+        date = dat.date(1, 1, 1) - dat.timedelta(days=t*36525) - (J2000 - dat.date(1, 1, 1))
         era = 'BC'
     time_text.set_text(f'{date} {era} (TT)')
     return *lns1, *lns2
