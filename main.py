@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import datetime as dat
 import webbrowser
+import matplotlib.lines
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 plt.style.use(['dark_background'])
@@ -22,6 +23,7 @@ orbitalElements['dw/dt'] = orbitalElements['d/dt(long.peri.)'] - orbitalElements
 orbitalElements['M'] = orbitalElements['L'] - orbitalElements['long.peri.'] 
 orbitalElements['dM/dt'] = orbitalElements['dL/dt'] - orbitalElements['d/dt(long.peri.)']
 
+# Separating out the angles actually used for computing positions (Kepler elements), their derivatives, and correction terms
 KEPLER_ELEMENTS = orbitalElements[['a', 'e', 'w', 'I', 'long.node.', 'M']].to_numpy()
 VARIATIONS = orbitalElements[['da/dt', 'de/dt', 'dw/dt', 'dI/dt', 'd/dt(long.node.)', 'dM/dt']].to_numpy()
 CORRECTIONS = np.zeros((len(orbitalElements.index), 4))
@@ -42,12 +44,11 @@ fig, ax = plt.subplots(figsize=(13, 10), subplot_kw={'projection':'3d'})
 AXLIMS = orbitalElements['a'].max()
 COLOURS = ['darkgrey', 'darkorange', 'g', 'r', 'darksalmon', 'gold', 'lightblue', 'b']
 planet_dots = [ax.plot([], [], [], 'o', label=planet, color=COLOURS[idx])[0] 
-    for idx, planet in enumerate(orbitalElements.index)]
-orbit_lines = [ax.plot([], [], [], 'k', lw=1)[0] 
-    for planet in orbitalElements.index]
+               for idx, planet in enumerate(orbitalElements.index)]
+orbit_lines = [ax.plot([], [], [], 'k', lw=1)[0] for _ in orbitalElements.index]
 time_text = fig.text(.612, .889, '', fontsize=20)
 
-def start_n_end() -> tuple[dat.date, dat.date]:
+def start_n_end() -> tuple[dat.date]:
     print('Input a date between 3000 BC and 3000 AD')
     # Get terrestrial time (TT), approx. JPL ephemeris time
     while True:
@@ -124,7 +125,7 @@ def get_coords(
         ellipsecl = np.dstack((ellipsecl, b))
     return xecl, ellipsecl
 
-def init():
+def init_func() -> tuple[matplotlib.lines.Line2D]:
     # Initialise figure
     ax.set_xlim3d(-AXLIMS, AXLIMS)
     ax.set_ylim3d(-AXLIMS, AXLIMS)
@@ -137,7 +138,7 @@ def init():
     ax.legend(bbox_to_anchor=(1.5, .8), fontsize=15)
     return *planet_dots, *orbit_lines
 
-def animate(t: float):
+def animate(t: float) -> tuple[matplotlib.lines.Line2D]:
     xecl, ellipsecl = get_coords(t, KEPLER_ELEMENTS, VARIATIONS, CORRECTIONS)
     for idx in range(orbitalElements.shape[0]):
         # Plot planets
@@ -159,7 +160,7 @@ def main():
     frames = np.concatenate((start * np.ones(int(ANIFPS / 2)),  # Linger on starting frame
                              np.linspace(start, end, ANIFRAMES - ANIFPS),
                              end * np.ones(int(ANIFPS / 2))))   # Linger on final frame
-    ani = FuncAnimation(fig, animate, frames=frames, init_func=init, interval=50, blit=True)
+    ani = FuncAnimation(fig, animate, frames=frames, init_func=init_func, interval=50, blit=True)
     ani.save('solar_system.gif', writer='pillow', fps=ANIFPS, dpi=ANIDPI)
     webbrowser.open('solar_system.gif')
 
