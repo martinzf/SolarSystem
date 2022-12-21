@@ -7,8 +7,8 @@ from matplotlib.animation import FuncAnimation
 plt.style.use(['dark_background'])
 
 # E.M. Standish (1992)'s data for simplified orbit propagation
-orbitalElements: pd.DataFrame = pd.read_csv('orbitel.csv', index_col=0) 
-joviansCorrection: pd.DataFrame = pd.read_csv('jovians.csv', index_col=0) 
+orbitalElements = pd.read_csv('orbitel.csv', index_col=0) 
+joviansCorrection = pd.read_csv('jovians.csv', index_col=0) 
 
 # Change degrees to radians
 orbitalElements.loc[:, 'I':'d/dt(long.peri.)'] = np.pi / 180 * orbitalElements.loc[:, 'I':'d/dt(long.peri.)']
@@ -22,15 +22,25 @@ orbitalElements['dw/dt'] = orbitalElements['d/dt(long.peri.)'] - orbitalElements
 orbitalElements['M'] = orbitalElements['L'] - orbitalElements['long.peri.'] 
 orbitalElements['dM/dt'] = orbitalElements['dL/dt'] - orbitalElements['d/dt(long.peri.)']
 
-J2000: dat.date = dat.date(2000, 1, 1) # Reference epoch (1st July 2000, 12:00 GMT)
-TOL: float = 1.75e-8 # Tolerance for Kepler equation solution (radians)
-ELLIPSEPOINTS: int = 50 # Orbit line resolution (point count)
-ANIDPI: int = 100
-ANIFPS: float = 50
-ANIFRAMES: int = 150
+KEPLER_ELEMENTS = orbitalElements[['a', 'e', 'w', 'I', 'long.node.', 'M']].to_numpy()
+VARIATIONS = orbitalElements[['da/dt', 'de/dt', 'dw/dt', 'dI/dt', 'd/dt(long.node.)', 'dM/dt']].to_numpy()
+CORRECTIONS = np.zeros((len(orbitalElements.index), 4))
+for idx, planet_name in enumerate(orbitalElements.index):
+        # Get corrections for planetary orbits
+        if planet_name in joviansCorrection.index:
+            CORRECTIONS[idx, :] = joviansCorrection.loc[planet_name].to_numpy()
+        else:
+            CORRECTIONS[idx, :] = np.zeros(4)
+
+J2000 = dat.date(2000, 1, 1) # Reference epoch (1st July 2000, 12:00 GMT)
+TOL = 1.75e-8 # Tolerance for Kepler equation solution (radians)
+ELLIPSEPOINTS = 50 # Orbit line resolution (point count)
+ANIDPI = 100
+ANIFPS = 50
+ANIFRAMES = 150
 fig, ax = plt.subplots(figsize=(13, 10), subplot_kw={'projection':'3d'})
-AXLIMS: float = orbitalElements['a'].max()
-COLOURS: list[str] = ['darkgrey', 'darkorange', 'g', 'r', 'darksalmon', 'gold', 'lightblue', 'b']
+AXLIMS = orbitalElements['a'].max()
+COLOURS = ['darkgrey', 'darkorange', 'g', 'r', 'darksalmon', 'gold', 'lightblue', 'b']
 planet_dots = [ax.plot([], [], [], 'o', label=planet, color=COLOURS[idx])[0] 
     for idx, planet in enumerate(orbitalElements.index)]
 orbit_lines = [ax.plot([], [], [], 'k', lw=1)[0] 
@@ -64,7 +74,7 @@ def start_n_end() -> tuple[dat.date, dat.date]:
         end = - ((TT - dat.date(1, 1, 1)) + (J2000 -dat.date(1, 1, 1))).days / 36525
     return start, end
 
-def calcorbit(angles: np.array, correction: np.array, t: float) -> tuple[np.array, np.array]:
+def calcorbit(angles: np.array, correction: np.array, t: float) -> tuple[np.array]:
     # Propagation of Kepler orbital elements using Standish's linear fit
     # Units: centuries, astronomical units, radians
     a, e, w, I, O, M = angles
@@ -99,6 +109,21 @@ def calcorbit(angles: np.array, correction: np.array, t: float) -> tuple[np.arra
     ellipsecl = rot @ ellipse
     return xecl, ellipsecl
 
+def get_coords(
+    t: float, 
+    elements: np.array, 
+    variations: np.array, 
+    corrections: np.array
+) -> tuple[np.array]:
+    angles = elements + t * variations
+    xecl, ellipsecl = calcorbit(angles[0, :], corrections[0, :], t)
+    for i, angles in enumerate(angles[1:, :]):
+        # Get coordinates for planets and orbits
+        a, b = calcorbit(angles, corrections[i, :], t)
+        xecl = np.hstack((xecl, a))
+        ellipsecl = np.dstack((ellipsecl, b))
+    return xecl, ellipsecl
+
 def init():
     # Initialise figure
     ax.set_xlim3d(-AXLIMS, AXLIMS)
@@ -113,23 +138,12 @@ def init():
     return *planet_dots, *orbit_lines
 
 def animate(t: float):
-    for planet_name, planet in orbitalElements.iterrows():
-        # Get coordinates for planets and orbits
-        idx = list(orbitalElements.index).index(planet_name)
-        if planet_name in joviansCorrection.index:
-            correction = joviansCorrection.loc[planet_name].to_numpy()
-        else:
-            correction = np.zeros(4)
-        elements = planet[['a', 'e', 'w', 'I', 'long.node.', 'M']].to_numpy()
-        variation = planet[['da/dt', 'de/dt', 'dw/dt', 'dI/dt', 'd/dt(long.node.)', 'dM/dt']].to_numpy()
-        angles = elements + t * variation
-        xecl, ellipsecl = calcorbit(angles, correction, t)
+    xecl, ellipsecl = get_coords(t, KEPLER_ELEMENTS, VARIATIONS, CORRECTIONS)
+    for idx in range(orbitalElements.shape[0]):
         # Plot planets
-        planet_dots[idx].set_data(xecl[0], xecl[1])
-        planet_dots[idx].set_3d_properties(xecl[2])
-        # Plot orbits
-        orbit_lines[idx].set_data(ellipsecl[0], ellipsecl[1])
-        orbit_lines[idx].set_3d_properties(ellipsecl[2])
+        planet_dots[idx].set_data_3d(xecl[0, idx], xecl[1, idx], xecl[2, idx])
+        ## Plot orbits
+        orbit_lines[idx].set_data_3d(ellipsecl[0, :, idx], ellipsecl[1, :, idx], ellipsecl[2, :, idx])
     # Display date
     try:
         date = J2000 + dat.timedelta(days=t*36525)
