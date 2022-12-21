@@ -94,8 +94,7 @@ def calcorbit(angles: np.array, correction: np.array, t: float) -> tuple[np.arra
         E += f / (1 - e * np.cos(E))
         f = M - (E - e * np.sin(E))
     # Coords. in heliocentric orbital plane (2D)
-    x = np.array([[a * (np.cos(E) - e)],
-                  [a * np.sqrt(1 - e ** 2) * np.sin(E)]])
+    coords = np.array([a * (np.cos(E) - e), a * np.sqrt(1 - e ** 2) * np.sin(E)])
     two_pi_radians = np.linspace(0, 2 * np.pi, ELLIPSEPOINTS)
     ellipse = np.vstack((a * (np.cos(two_pi_radians) - e),
                          a * np.sqrt(1 - e ** 2) * np.sin(two_pi_radians)))
@@ -106,24 +105,26 @@ def calcorbit(angles: np.array, correction: np.array, t: float) -> tuple[np.arra
     rot = np.array([[cw * co - sw * so * ci, -sw * co - cw * so * ci],
                     [cw * so + sw * co * ci, -sw * so + cw * co * ci],
                     [sw * si, cw * si]])
-    xecl = rot @ x
-    ellipsecl = rot @ ellipse
-    return xecl, ellipsecl
+    coords_ecliptic = rot @ coords
+    ellipse_ecliptic = rot @ ellipse
+    return coords_ecliptic, ellipse_ecliptic
 
 def get_coords(
     t: float, 
     elements: np.array, 
     variations: np.array, 
-    corrections: np.array
+    corrections: np.array,
+    ellipsepoints: int
 ) -> tuple[np.array]:
-    angles = elements + t * variations
-    xecl, ellipsecl = calcorbit(angles[0, :], corrections[0, :], t)
-    for i, angles in enumerate(angles[1:, :]):
-        # Get coordinates for planets and orbits
+    # Get coordinates for planets and orbits
+    elements = elements + t * variations
+    coords_ecliptic = np.zeros((3, np.size(elements, 0)))
+    ellipse_ecliptic = np.zeros((3, ellipsepoints, np.size(elements, 0)))
+    for i, angles in enumerate(elements):
         a, b = calcorbit(angles, corrections[i, :], t)
-        xecl = np.hstack((xecl, a))
-        ellipsecl = np.dstack((ellipsecl, b))
-    return xecl, ellipsecl
+        coords_ecliptic[:, i] = a
+        ellipse_ecliptic[:, :, i] = b
+    return coords_ecliptic, ellipse_ecliptic
 
 def init_func() -> tuple[matplotlib.lines.Line2D]:
     # Initialise figure
@@ -139,12 +140,18 @@ def init_func() -> tuple[matplotlib.lines.Line2D]:
     return *planet_dots, *orbit_lines
 
 def animate(t: float) -> tuple[matplotlib.lines.Line2D]:
-    xecl, ellipsecl = get_coords(t, KEPLER_ELEMENTS, VARIATIONS, CORRECTIONS)
+    coords_ecliptic, ellipse_ecliptic = get_coords(
+        t, 
+        KEPLER_ELEMENTS, 
+        VARIATIONS, 
+        CORRECTIONS, 
+        ELLIPSEPOINTS
+    )
     for idx in range(orbitalElements.shape[0]):
         # Plot planets
-        planet_dots[idx].set_data_3d(xecl[0, idx], xecl[1, idx], xecl[2, idx])
+        planet_dots[idx].set_data_3d(coords_ecliptic[0, idx], coords_ecliptic[1, idx], coords_ecliptic[2, idx])
         ## Plot orbits
-        orbit_lines[idx].set_data_3d(ellipsecl[0, :, idx], ellipsecl[1, :, idx], ellipsecl[2, :, idx])
+        orbit_lines[idx].set_data_3d(ellipse_ecliptic[0, :, idx], ellipse_ecliptic[1, :, idx], ellipse_ecliptic[2, :, idx])
     # Display date
     try:
         date = J2000 + dat.timedelta(days=t*36525)
